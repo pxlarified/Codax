@@ -479,7 +479,7 @@ export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] 
   },
   {
     slug: "chatgpt-web/gpt-6-sol",
-    displayName: "GPT-6 Sol (Web)",
+    displayName: "GPT-6 Sol",
     description: "GPT-6 Sol through ChatGPT with selectable reasoning effort.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,
@@ -504,7 +504,7 @@ export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] 
   },
   {
     slug: "chatgpt-web/gpt-5.6-sol",
-    displayName: "GPT-5.6 Sol (Web)",
+    displayName: "GPT-5.6 Sol",
     description: "GPT-5.6 Sol through ChatGPT with selectable reasoning effort.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,

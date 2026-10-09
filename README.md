@@ -166,7 +166,7 @@ cd Codax && \
 bun run app
 ```
 
-This source path requires Bun 1.4.0. The command installs locked dependencies and opens the app.
+This source path requires Bun 1.4.2. The command installs locked dependencies and opens the app.
 
 ```bash
 bun run app

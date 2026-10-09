@@ -269,7 +269,7 @@ test("Zero Risk adapter never starts the automatic browser worker and completes 
       { headers: new Headers() },
       event => events.push(event),
     );
-    expect(calls).toEqual(["start", "sent", "started", "end:completed:true"]);
+    expect(calls).toEqual(["start", "sent", "started", "end:completed:false"]);
     expect(manualCompaction).toBeUndefined();
     expect(events.some(event => event.type === "text_delta"
       && event.phase === "commentary"

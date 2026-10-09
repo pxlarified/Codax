@@ -2929,18 +2929,6 @@ test("a required retained conversation fails before creating a browser tab", asy
   assert.equal(created, false);
 });
 
-test("five browser tabs are a hard account-safety limit", async () => {
-  const turnTabs = new Map(Array.from({ length: 5 }, (_unused, index) => [
-    `tab-${index + 1}`,
-    { ordinal: index + 1 },
-  ]));
-
-  await assert.rejects(
-    BrowserHost.prototype.createTurnTab.call({ turnTabs }, "trace_six", 444),
-    /already has 5 browser tabs.*avoid excessive parallel traffic/,
-  );
-});
-
 test("a full browser host evicts only its oldest ready tab", () => {
   const oldest = { id: "oldest", ordinal: 1, status: "ready", lastHeartbeatAt: 10 };
   const newer = { id: "newer", ordinal: 2, status: "ready", lastHeartbeatAt: 20 };
@@ -3219,68 +3207,6 @@ function failedAutomaticTurnFixture() {
   });
   return { fixture, tab, closed };
 }
-
-test("failed ChatGPT pages remain inspectable but lose turn ownership and cannot become successful", async () => {
-  const { fixture, tab, closed } = failedAutomaticTurnFixture();
-  assert.deepEqual(await fixture.endTurn(tab.traceId, tab.helperPid, "failed", true, "Check the ChatGPT tab"),
-    { cancelledByUser: false });
-  assert.equal(fixture.turnTabs.get(tab.id), tab);
-  assert.equal(fixture.selectedTabId, tab.id);
-  assert.equal(tab.status, "error");
-  assert.equal(tab.message, "Check the ChatGPT tab");
-  assert.equal(tab.approvalPending, false);
-  assert.equal(tab.turnProgress, undefined);
-  assert.equal(tab.connectorBound, false);
-  assert.equal(fixture.activeTraceId, null);
-  assert.throws(() => fixture.heartbeatTurn(tab.traceId, tab.helperPid), /no longer running/);
-  assert.throws(() => fixture.setTurnApprovalPending(tab.traceId, tab.helperPid, true), /no longer running/);
-  await assert.rejects(() => fixture.endTurn(tab.traceId, 778, "failed", true), /helper ownership mismatch/);
-  await assert.rejects(() => fixture.endTurn(tab.traceId, tab.helperPid, "completed", true, undefined, true, true),
-    /already failed/);
-  const failedAt = tab.failedAt;
-  await fixture.endTurn(tab.traceId, tab.helperPid, "failed", true);
-  assert.equal(tab.failedAt, failedAt, "repeated end notifications cannot extend retention");
-  assert.deepEqual(closed, []);
-
-  fixture.lastTurnSweepAt = failedAt + 30 * 60_000 - 2;
-  await fixture.reapExpiredTurnTabs(failedAt + 30 * 60_000 - 1);
-  assert.equal(fixture.turnTabs.get(tab.id), tab, "helper liveness is irrelevant to a terminal page");
-  await fixture.reapExpiredTurnTabs(failedAt + 30 * 60_000);
-  assert.deepEqual(closed, [tab.id]);
-  assert.equal(fixture.turnTabs.size, 0);
-});
-
-test("failed pages cannot supply retained history and a same-trace retry gets a fresh document", async () => {
-  const { fixture, tab, closed } = failedAutomaticTurnFixture();
-  await fixture.endTurn(tab.traceId, tab.helperPid, "failed", false);
-  for (const traceId of [tab.traceId, "next-trace"]) {
-    await assert.rejects(() => fixture.beginTurn(traceId, false, 778, tab.conversationKey, tab.connectorIdentity, true),
-      error => error.code === "retained_conversation_unavailable");
-  }
-  assert.deepEqual(closed, []);
-  const next = await fixture.beginTurn("next-trace", false, 778, tab.conversationKey, tab.connectorIdentity);
-  assert.equal(next.reused, false);
-  assert.equal(fixture.turnTabs.get(tab.id), tab, "another turn does not immediately erase failure evidence");
-  fixture.turnTabs.delete(next.tabId);
-  const retry = await fixture.beginTurn(tab.traceId, false, 778, tab.conversationKey, tab.connectorIdentity);
-  assert.equal(retry.reused, false);
-  assert.notEqual(retry.tabId, tab.id);
-  assert.deepEqual(closed, [tab.id]);
-  assert.equal([...fixture.turnTabs.values()].filter(item => item.traceId === tab.traceId).length, 1);
-});
-
-test("failed pages free capacity before reusable conversations without evicting active error states", async () => {
-  const { fixture, tab, closed } = failedAutomaticTurnFixture();
-  await fixture.endTurn(tab.traceId, tab.helperPid, "failed", false);
-  const reusable = { id: "reusable", status: "ready", lastHeartbeatAt: 1 };
-  const activeError = { id: "active-error", status: "error", interactionMode: "automatic", lastHeartbeatAt: 1 };
-  fixture.turnTabs.set(reusable.id, reusable);
-  fixture.turnTabs.set(activeError.id, activeError);
-  assert.equal(fixture.evictOldestReclaimableTurnTab(), true);
-  assert.deepEqual(closed, [tab.id]);
-  assert.equal(fixture.turnTabs.get(reusable.id), reusable);
-  assert.equal(fixture.turnTabs.get(activeError.id), activeError);
-});
 
 function manualTurnFixture() {
   const clipboardWrites = [];
@@ -3974,4 +3900,14 @@ test("off-on-off fresh conversation changes retire completed history before it c
     assert.equal(state[property], false);
     assert.equal(fixture.turnTabs.get(manual.id), savedChats ? undefined : manual);
   }
+});
+
+test("terminal failed tabs close immediately without affecting other tasks", async () => {
+  const { fixture, tab, closed } = failedAutomaticTurnFixture();
+  const other = { id: "other", status: "running" };
+  fixture.turnTabs.set(other.id, other);
+  await fixture.endTurn(tab.traceId, tab.helperPid, "failed", false, "Task failed");
+  assert.deepEqual(closed, [tab.id]);
+  assert.equal(fixture.turnTabs.has(tab.id), false);
+  assert.equal(fixture.turnTabs.get(other.id), other);
 });

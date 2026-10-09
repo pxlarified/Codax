@@ -67,7 +67,7 @@ const en = {
   showSidebar: "Show sidebar",
   resizeSidebar: "Resize sidebar",
   hideTab: "Close tab",
-  browserTabLimit: "Up to five simultaneous ChatGPT Web tabs. The limit avoids excessive parallel traffic on your ChatGPT account.",
+  browserTabLimit: "Each active task has its own ChatGPT browser tab. Tabs close when tasks finish.",
   browserAddress: "ChatGPT browser",
   noActiveTask: "No active task",
   noActiveTaskBody: "ChatGPT will appear here when Codex starts a Web model turn.",

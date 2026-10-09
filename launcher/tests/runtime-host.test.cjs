@@ -133,7 +133,7 @@ test("browser interaction mode changes reuse the transactional setup and refresh
   assert.equal(automaticResult.mode, "automatic");
   assert.equal(automatic.invocation().args.includes("--automatic-browser-interaction"), true);
   assert.equal(automatic.invocation().args.includes("--refresh-account-capabilities"), true);
-  assert.equal(automatic.invocation().args.includes("--bigger-context"), true);
+  assert.equal(automatic.invocation().args.includes("--bigger-context"), false);
 });
 
 test("switching back from Zero Risk preserves the saved automatic connector identity", async () => {
@@ -170,56 +170,6 @@ test("DEV core setup configures only the isolated harness contract", async () =>
   });
   assert.equal(fixture.invocation().args.includes("--replace-codex-route"), false);
   assert.equal(fixture.invocation().args.includes("--restart-service"), false);
-});
-
-test("Bigger Context uses the setup transaction and refreshes the production Codex catalog", async () => {
-  const fixture = hostFor({ mode: "full", appName: "Codex Native2", solAvailable: true });
-  const result = await fixture.host.setBiggerContext(true);
-  assert.equal(result.enabled, true);
-  assert.deepEqual(fixture.invocation(), {
-    name: "bigger-context",
-    args: [
-      "setup",
-      "--full",
-      "--browser-host-descriptor",
-      "/runtime/launcher-browser.json",
-      "--automatic-browser-interaction",
-      "--replace-codex-route",
-      "--acknowledge-unofficial",
-      "--restart-service",
-      "--bigger-context",
-    ],
-  });
-});
-
-test("Luna can enable and disable Bigger Context in production and DEV", async () => {
-  for (const createHost of [hostFor, devHostFor]) {
-    const fixture = createHost({ mode: "browser-only", solAvailable: false, experimentalBiggerContext: true });
-    assert.equal((await fixture.host.setBiggerContext(true)).enabled, true);
-    assert.ok(fixture.invocation().args.includes("--bigger-context"));
-    const result = await fixture.host.setBiggerContext(false);
-    assert.equal(result.enabled, false);
-    assert.ok(fixture.invocation().args.includes("--standard-context"));
-  }
-});
-
-test("Bigger Context updates the isolated DEV config without installing a Codex route", async () => {
-  const fixture = devHostFor({ mode: "browser-only" });
-  const result = await fixture.host.setBiggerContext(false);
-  assert.equal(result.enabled, false);
-  assert.deepEqual(fixture.invocation(), {
-    name: "bigger-context",
-    args: [
-      "dev",
-      "setup",
-      "--browser-only",
-      "--browser-host-descriptor",
-      "/dev/runtime/launcher-browser.json",
-      "--automatic-browser-interaction",
-      "--acknowledge-unofficial",
-      "--standard-context",
-    ],
-  });
 });
 
 test("Zero Risk Pro transaction installs or removes only its explicit model profile", async () => {
@@ -1367,7 +1317,6 @@ test("skill file experiment uses the setup transaction in production and DEV, an
   assert.equal(manual.invocation(), undefined);
 });
 
-
 test("tool approvals opt in and out through setup without refreshing models or changing chat settings", async () => {
   for (const makeHost of [hostFor, devHostFor]) {
     for (const mode of ["browser-only", "full"]) {
@@ -1439,7 +1388,6 @@ test("fresh-conversation preference uses production and DEV setup without forcin
   }
 });
 
-
 for (const development of [false, true]) test(`plugin renaming uses transactional ${development ? "DEV" : "production"} setup without changing credentials or refreshing models`, async () => {
   const factory = development ? devHostFor : hostFor;
   const fixture = factory({ mode: "full", appName: "Codex Work", automaticAppName: "Codex Work", manualAppName: "Codex Zero Risk" });
@@ -1477,7 +1425,6 @@ test("renaming rolls back the saved name if the new runtime fails", async () => 
   assert.equal(config.automaticAppName, "Codex Old");
   assert.equal(config.appName, "Codex Old");
 });
-
 
 test("automatic startup reconnects only a route disconnected for runtime recovery", async () => {
   for (const recovery of [false, true]) {

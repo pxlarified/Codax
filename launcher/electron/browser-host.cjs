@@ -31,7 +31,6 @@ const CHATGPT_ORIGIN = "https://chatgpt.com";
 const IDLE_BROWSER_URL = "data:text/html;charset=utf-8,%3C!doctype%20html%3E%3Chtml%3E%3Chead%3E%3Cmeta%20charset%3D%22utf-8%22%3E%3Ctitle%3ECodex%20Web%20GPT%3C%2Ftitle%3E%3C%2Fhead%3E%3Cbody%3E%3C%2Fbody%3E%3C%2Fhtml%3E#codex-web-gpt-browser-host";
 const PRIMARY_VIEW_BOOTSTRAP_TIMEOUT_MS = 10_000;
 const MAX_BROWSER_VIEW_DIMENSION = 16_384;
-const MAX_BROWSER_TABS = 5;
 const MAX_CANCELLED_TURN_TRACES = 256;
 const MANUAL_SUBMIT_TIMEOUT_MS = 60_000;
 const MANUAL_COMPACTION_SUBMIT_TIMEOUT_MS = 120_000;
@@ -565,17 +564,10 @@ class BrowserHost {
 
   async createTurnTab(traceId, helperPid, conversationKey, connectorIdentity, signal) {
     signal?.throwIfAborted();
-    if (this.turnTabs.size >= MAX_BROWSER_TABS
-      && !BrowserHost.prototype.evictOldestReclaimableTurnTab.call(this)) {
-      throw new Error(
-        `ChatGPT Web already has ${MAX_BROWSER_TABS} browser tabs; close one before starting another turn to avoid excessive parallel traffic on the ChatGPT account`,
-      );
-    }
     const id = randomBytes(12).toString("base64url");
     const surfaceId = randomBytes(24).toString("base64url");
-    const ordinal = Array.from({ length: MAX_BROWSER_TABS }, (_unused, index) => index + 1)
-      .find(candidate => ![...this.turnTabs.values()].some(tab => tab.ordinal === candidate));
-    if (!ordinal) throw new Error("ChatGPT Web browser tab allocation is inconsistent");
+    let ordinal = 1;
+    while ([...this.turnTabs.values()].some(tab => tab.ordinal === ordinal)) ordinal += 1;
     const view = new WebContentsView({
       webPreferences: {
         partition: this.partition,
@@ -654,16 +646,9 @@ class BrowserHost {
   }
 
   createManualTurnTab(traceId, helperPid, conversationKey, prompt, manualSubmitTimeoutMs) {
-    if (this.turnTabs.size >= MAX_BROWSER_TABS
-      && !BrowserHost.prototype.evictOldestReclaimableTurnTab.call(this)) {
-      throw new Error(
-        `ChatGPT Web already has ${MAX_BROWSER_TABS} browser tabs; close one before starting another turn to avoid excessive parallel traffic on the ChatGPT account`,
-      );
-    }
     const id = randomBytes(12).toString("base64url");
-    const ordinal = Array.from({ length: MAX_BROWSER_TABS }, (_unused, index) => index + 1)
-      .find(candidate => ![...this.turnTabs.values()].some(tab => tab.ordinal === candidate));
-    if (!ordinal) throw new Error("ChatGPT Web browser tab allocation is inconsistent");
+    let ordinal = 1;
+    while ([...this.turnTabs.values()].some(tab => tab.ordinal === ordinal)) ordinal += 1;
     const view = new WebContentsView({
       webPreferences: {
         partition: this.partition,
@@ -1436,7 +1421,7 @@ class BrowserHost {
             ...[...this.turnTabs.values()].map((tab) => this.tabSnapshot(tab)),
           ]
         : [homeTab],
-      maxTabs: MAX_BROWSER_TABS,
+      maxTabs: null,
     };
   }
 
@@ -2597,18 +2582,6 @@ class BrowserHost {
       tab.lastHeartbeatAt = Date.now();
       if (hideAfterTurn && !this.activeTraceId) this.hide();
       this.logger.info("browser.tab_retained", { tabId: tab.id, traceId });
-      this.publishState?.(this.snapshot());
-      this.writeDescriptor();
-      return { cancelledByUser };
-    }
-    if (status === "failed" && tab.interactionMode === "automatic" && tab.bootstrapReady === true
-      && !authenticationRequired && !cancelledByUser && !tab.view.webContents.isDestroyed()) {
-      // Preserve the page the error asks the user to inspect. This is a terminal document, not a
-      // retained conversation: heartbeats and reuse reject it, and the runtime retires its tools.
-      // Reclaim it before reusable conversations when slots are needed, or after the normal TTL.
-      tab.failedAt = tab.lastHeartbeatAt = Date.now();
-      tab.connectorBound = false;
-      this.logger.info("browser.failed_tab_preserved", { tabId: tab.id, traceId });
       this.publishState?.(this.snapshot());
       this.writeDescriptor();
       return { cancelledByUser };

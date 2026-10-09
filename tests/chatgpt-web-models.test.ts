@@ -47,8 +47,8 @@ describe("fixed ChatGPT Web model routes", () => {
       ["chatgpt-web/pro", "ultra", "max"],
     ]);
     expect(CHATGPT_WEB_MODEL_ROUTES.map(route => route.displayName)).toEqual([
-      "GPT-6 Sol Instant (Web)", "GPT-6 Sol (Web)",
-      "GPT-5.6 Sol Instant (Web)", "GPT-5.6 Sol (Web)", "GPT-5.6 Pro (Web)", "GPT-6 Pro (Web)",
+      "GPT-6 Sol Instant (Web)", "GPT-6 Sol",
+      "GPT-5.6 Sol Instant (Web)", "GPT-5.6 Sol", "GPT-5.6 Pro (Web)", "GPT-6 Pro (Web)",
     ]);
     expect(CHATGPT_WEB_LUNA_MODEL_ROUTE.displayName).toBe("Luna (Web)");
   });

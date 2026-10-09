@@ -600,7 +600,6 @@ function registerIpc({ logger, stateStore }) {
   });
   handle("launcher:complete-onboarding", (_event, language, rawInteractionMode) => {
     const current = stateStore.read();
-    if (!current.githubOpened || !current.xOpened) throw new Error("Open the GitHub and X pages before continuing");
     if (current.autoStart) setAutostart(app, true);
     const next = stateStore.update({
       language: validateLanguage(language),
@@ -921,18 +920,6 @@ function registerIpc({ logger, stateStore }) {
       ...autostart,
     };
   });
-  handle("launcher:bigger-context", async (_event, enabled) => {
-    const result = await runtimeHost.setBiggerContext(enabled === true);
-    syncBrowserPreferences(stateStore, runtimeHost.runtimeConfigSnapshot().config);
-    const state = stateStore.update({
-      experimentalBiggerContext: result.enabled,
-      codexCatalogVerified: IS_DEV_PROFILE ? true : false,
-      codexRestartRequired: IS_DEV_PROFILE ? false : true,
-    });
-    send("launcher:state-changed", state);
-    if (!IS_DEV_PROFILE) startCatalogVerificationMonitor({ logger, stateStore });
-    return state;
-  });
   handle("launcher:skill-attachments", async (_event, enabled) => {
     if (browserHost.activeTraceId || browserHost.currentOperation()) {
       throw new Error("Finish or cancel active ChatGPT turns before changing Skills as files");
@@ -1136,7 +1123,7 @@ async function start() {
   limitsController = new LimitsController(path.join(app.getPath("userData"), "limits.json"), {
     getInteractionMode: () => stateStore.read().browserInteractionMode,
   });
-  if (IS_DEV_PROFILE && !stateStore.read().onboardingComplete) {
+  if (IS_DEV_PROFILE) {
     stateStore.update({
       language: stateStore.read().language || "en",
       onboardingComplete: true,

@@ -132,15 +132,6 @@ export function App() {
       data-theme="dark"
     >
       <AnimatePresence mode="wait">
-        {!snapshot.state.onboardingComplete ? (
-          <Onboarding
-            key="onboarding"
-            language={language}
-            setError={setError}
-            snapshot={snapshot}
-            updateState={updateState}
-          />
-        ) : (
           <LauncherShell
             browser={browser}
             copy={copy}
@@ -152,182 +143,11 @@ export function App() {
             snapshot={snapshot}
             updateState={updateState}
           />
-        )}
       </AnimatePresence>
       <AnimatePresence>
         {error ? <ErrorToast copy={copy} message={error} onDismiss={() => setError(null)} /> : null}
       </AnimatePresence>
     </div>
-  );
-}
-
-function Onboarding({
-  language,
-  setError,
-  snapshot,
-  updateState,
-}: {
-  language: Language;
-  setError: (error: string | null) => void;
-  snapshot: LauncherSnapshot;
-  updateState: (state: LauncherState) => void;
-}) {
-  const [stage, setStage] = useState<"language" | "interaction" | "support">(
-    snapshot.state.language ? "interaction" : "language",
-  );
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(language);
-  const [selectedInteractionMode, setSelectedInteractionMode] = useState<BrowserInteractionMode>(
-    snapshot.state.browserInteractionMode,
-  );
-  const [busy, setBusy] = useState(false);
-  const localized = copyFor(selectedLanguage);
-  const isLanguage = stage === "language";
-  const isInteraction = stage === "interaction";
-  const stageIndex = isLanguage ? 0 : isInteraction ? 1 : 2;
-
-  const chooseLanguage = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      updateState(await api!.setLanguage(selectedLanguage));
-      setStage("interaction");
-    } catch (cause) {
-      setError(messageOf(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const openSocial = async (target: "github" | "x") => {
-    setBusy(true);
-    setError(null);
-    try {
-      updateState(await api!.openSocial(target));
-    } catch (cause) {
-      setError(messageOf(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const finish = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      updateState(await api!.completeOnboarding(selectedLanguage, selectedInteractionMode));
-    } catch (cause) {
-      setError(messageOf(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <motion.main
-      animate={{ opacity: 1 }}
-      className="welcome"
-      exit={{ opacity: 0 }}
-      initial={{ opacity: 0 }}
-      transition={{ duration: 0.22 }}
-    >
-      <header className="welcome-top draggable">
-        <div className="welcome-brand no-drag">
-          <BrandMark small />
-          <span>{localized.product}</span>
-          {snapshot.profile === "development" ? <em className="dev-profile-badge">{localized.devBadge}</em> : null}
-        </div>
-        <span className="welcome-version no-drag">v{snapshot.version}</span>
-      </header>
-
-      <AnimatePresence mode="wait">
-        <motion.section
-          animate={{ opacity: 1, y: 0 }}
-          className="welcome-stage"
-          exit={{ opacity: 0, y: -8 }}
-          initial={{ opacity: 0, y: 8 }}
-          key={stage}
-          transition={PANEL_TRANSITION}
-        >
-          <span className="welcome-kicker">0{stageIndex + 1}</span>
-          <h1>{isLanguage
-            ? localized.chooseLanguage
-            : isInteraction ? localized.interactionMode : localized.supportTitle}</h1>
-          <p>{isLanguage
-            ? localized.chooseLanguageHint
-            : isInteraction ? localized.interactionModeOnboardingBody : localized.supportBody}</p>
-
-          {isLanguage ? (
-            <div className="welcome-options" role="radiogroup" aria-label={localized.chooseLanguage}>
-              {languageOptions.map(option => (
-                <WelcomeOption
-                  key={option.value}
-                  active={selectedLanguage === option.value}
-                  detail={option.label}
-                  label={option.label}
-                  marker={option.marker}
-                  onClick={() => setSelectedLanguage(option.value)}
-                />
-              ))}
-            </div>
-          ) : isInteraction ? (
-            <InteractionModePicker
-              className="welcome-interaction-mode-picker"
-              copy={localized}
-              disabled={busy}
-              mode={selectedInteractionMode}
-              onChange={setSelectedInteractionMode}
-            />
-          ) : (
-            <div className="welcome-options">
-              <WelcomeAction
-                complete={snapshot.state.githubOpened}
-                disabled={busy}
-                icon="github"
-                label={snapshot.state.githubOpened ? localized.starred : localized.star}
-                onClick={() => openSocial("github")}
-              />
-              <WelcomeAction
-                complete={snapshot.state.xOpened}
-                disabled={busy}
-                icon="x"
-                label={snapshot.state.xOpened ? localized.followed : localized.follow}
-                onClick={() => openSocial("x")}
-              />
-            </div>
-          )}
-        </motion.section>
-      </AnimatePresence>
-
-      <footer className="welcome-footer">
-        <div>
-          {!isLanguage ? (
-            <button
-              className="text-button"
-              onClick={() => setStage(isInteraction ? "language" : "interaction")}
-              type="button"
-            >
-              {localized.previous}
-            </button>
-          ) : null}
-        </div>
-        <div className="welcome-progress" aria-label={`${stageIndex + 1} / 3`}>
-          {[0, 1, 2].map(index => (
-            <span
-              className={index < stageIndex ? "is-complete" : index === stageIndex ? "is-active" : ""}
-              key={index}
-            />
-          ))}
-        </div>
-        <PrimaryButton
-          disabled={busy || (stage === "support" && (!snapshot.state.githubOpened || !snapshot.state.xOpened))}
-          onClick={isLanguage
-            ? chooseLanguage
-            : isInteraction ? () => setStage("support") : finish}
-        >
-          {stage === "support" ? localized.finishWelcome : localized.continue}
-        </PrimaryButton>
-      </footer>
-    </motion.main>
   );
 }
 
@@ -366,17 +186,9 @@ function LauncherShell({
   const [sessionReminderBusy, setSessionReminderBusy] = useState(false);
   const [sessionReminderDue, setSessionReminderDue] = useState(false);
   const [mcpTargetMode, setMcpTargetMode] = useState<BrowserInteractionMode | null>(null);
-  const [biggerContextRecommendationOpen, setBiggerContextRecommendationOpen] = useState(
-    snapshot.state.browserInteractionMode === "automatic"
-      && snapshot.state.coreSetupComplete === true
-      && snapshot.state.biggerContextAvailable === true
-      && !snapshot.state.experimentalBiggerContext,
-  );
-  const [biggerContextRecommendationBusy, setBiggerContextRecommendationBusy] = useState(false);
   const browserSlotRef = useCallback((node: HTMLDivElement | null) => setBrowserSlot(node), []);
   const browserSurfaceActive = surface === "browser"
-    && !(compactSidebar && sidebarOpen)
-    && !biggerContextRecommendationOpen;
+    && !(compactSidebar && sidebarOpen);
   const needsBrowser = snapshot.state.browserInteractionMode === "automatic"
     && browser?.authenticated !== true;
   const needsSetup = !needsBrowser && !interactionSetupComplete;
@@ -392,16 +204,9 @@ function LauncherShell({
   const limitsCopy = limitsCopyFor(language);
 
   useEffect(() => {
-    if (snapshot.state.browserInteractionMode === "manual" || snapshot.state.biggerContextAvailable !== true) {
-      setBiggerContextRecommendationOpen(false);
-    }
-  }, [snapshot.state.browserInteractionMode, snapshot.state.biggerContextAvailable]);
-
-  useEffect(() => {
     if (!selectedManualTab) return;
     setSurface("browser");
     setSidebarOpen(false);
-    setBiggerContextRecommendationOpen(false);
     void api!.setBrowserSurfaceActive(true).catch((cause) => setError(messageOf(cause)));
   }, [selectedManualTab?.id, selectedManualTab?.manualState, setError]);
 
@@ -525,19 +330,6 @@ function LauncherShell({
       setError(messageOf(cause));
     } finally {
       setSessionReminderBusy(false);
-    }
-  };
-
-  const setRecommendedBiggerContext = async (enabled: boolean) => {
-    if (biggerContextRecommendationBusy) return;
-    setBiggerContextRecommendationBusy(true);
-    setError(null);
-    try {
-      updateState(await api!.setBiggerContext(enabled));
-    } catch (cause) {
-      setError(messageOf(cause));
-    } finally {
-      setBiggerContextRecommendationBusy(false);
     }
   };
 
@@ -673,7 +465,6 @@ function LauncherShell({
             </div>
             <SecondaryButton onClick={() => {
               navigateSurface("browser");
-              setBiggerContextRecommendationOpen(false);
               void api!.selectBrowserTab(tab.id).then(() => activateBrowser(true))
                 .catch(cause => setError(messageOf(cause)));
             }}>{copy.openChatgpt}</SecondaryButton>
@@ -736,7 +527,6 @@ function LauncherShell({
                 openTab={async id => {
                   await api!.selectBrowserTab(id);
                   navigateSurface("browser");
-                  setBiggerContextRecommendationOpen(false);
                   await activateBrowser(true);
                 }} />
             ) : null}
@@ -772,19 +562,7 @@ function LauncherShell({
       </section>
 
       <AnimatePresence>
-        {biggerContextRecommendationOpen ? (
-          <BiggerContextRecommendation
-            busy={biggerContextRecommendationBusy || operation?.status === "running"}
-            checked={snapshot.state.experimentalBiggerContext}
-            copy={copy}
-            onChange={(enabled) => void setRecommendedBiggerContext(enabled)}
-            onClose={() => setBiggerContextRecommendationOpen(false)}
-          />
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {sessionReminderDue && !biggerContextRecommendationOpen ? (
+        {sessionReminderDue ? (
           <SessionRefreshReminder
             busy={sessionReminderBusy}
             copy={copy}
@@ -1768,17 +1546,6 @@ function SettingsSurface({
       setBusy(false);
     }
   };
-  const setBiggerContext = async (enabled: boolean) => {
-    setBusy(true);
-    setError(null);
-    try {
-      updateState(await api!.setBiggerContext(enabled));
-    } catch (cause) {
-      setError(messageOf(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
   const setSkillAttachments = async (enabled: boolean) => {
     setBusy(true);
     setError(null);
@@ -1910,21 +1677,6 @@ function SettingsSurface({
             onChange={(checked) => void api!.setPreference("showBrowserDuringTurns", checked)
               .then(updateState)
               .catch((cause) => setError(messageOf(cause)))}
-          />
-        </SettingRow>
-        <SettingRow
-          body={snapshot.state.browserInteractionMode === "manual"
-            ? copy.manualBiggerContextUnavailable
-            : copy.biggerContextBody}
-          label={copy.biggerContext}
-        >
-          <Switch
-            checked={snapshot.state.experimentalBiggerContext}
-            disabled={busy
-              || snapshot.state.browserInteractionMode === "manual"
-              || (snapshot.state.biggerContextAvailable !== true && !snapshot.state.experimentalBiggerContext)
-              || snapshot.state.coreSetupComplete !== true}
-            onChange={(checked) => void setBiggerContext(checked)}
           />
         </SettingRow>
         <SettingRow body={snapshot.state.browserInteractionMode === "manual"
@@ -2695,59 +2447,6 @@ function SessionRefreshReminder({
         </button>
       </div>
     </motion.aside>
-  );
-}
-
-function BiggerContextRecommendation({
-  busy,
-  checked,
-  copy,
-  onChange,
-  onClose,
-}: {
-  busy: boolean;
-  checked: boolean;
-  copy: Copy;
-  onChange: (checked: boolean) => void;
-  onClose: () => void;
-}) {
-  return (
-    <motion.div
-      animate={{ opacity: 1 }}
-      aria-describedby="bigger-context-recommendation-body"
-      aria-labelledby="bigger-context-recommendation-title"
-      aria-modal="true"
-      className="bigger-context-recommendation-backdrop"
-      exit={{ opacity: 0 }}
-      initial={{ opacity: 0 }}
-      role="dialog"
-      transition={{ duration: 0.18 }}
-    >
-      <motion.section
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bigger-context-recommendation"
-        exit={{ opacity: 0, scale: 0.98, y: 6 }}
-        initial={{ opacity: 0, scale: 0.98, y: 8 }}
-        transition={PANEL_TRANSITION}
-      >
-        <header className="bigger-context-recommendation-header">
-          <small>{copy.biggerContext}</small>
-          <h2 id="bigger-context-recommendation-title">{copy.biggerContextRecommendationTitle}</h2>
-        </header>
-        <p className="bigger-context-recommendation-body" id="bigger-context-recommendation-body">{copy.biggerContextRecommendationBody}</p>
-        <div className="bigger-context-recommendation-toggle">
-          <div>
-            <strong>{copy.biggerContext}</strong>
-            <p>{copy.biggerContextRecommendationToggleBody}</p>
-          </div>
-          <Switch checked={checked} disabled={busy} onChange={onChange} />
-        </div>
-        {checked ? <p className="bigger-context-recommendation-restart">{copy.restartCodex}</p> : null}
-        <footer>
-          <SecondaryButton disabled={busy} onClick={onClose}>{copy.close}</SecondaryButton>
-        </footer>
-      </motion.section>
-    </motion.div>
   );
 }
 

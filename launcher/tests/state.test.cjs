@@ -18,7 +18,7 @@ test("launcher state persists onboarding, language, and autostart atomically", (
     assert.deepEqual(store.read(), {
       version: 1,
       language: null,
-      onboardingComplete: false,
+      onboardingComplete: true,
       githubOpened: false,
       xOpened: false,
       autoStart: true,
@@ -129,7 +129,7 @@ test("persisted sidebar corruption is repaired without changing the rest of laun
     assert.deepEqual(createStateStore(file).read(), {
       version: 1,
       language: "zh-CN",
-      onboardingComplete: false,
+      onboardingComplete: true,
       githubOpened: false,
       xOpened: false,
       autoStart: true,
@@ -173,7 +173,7 @@ test("browser interaction defaults to Automatic and preserves a completed onboar
       browserInteractionMode: "manual",
       zeroRiskProEnabled: true,
     }));
-    assert.equal(createStateStore(file).read().browserInteractionMode, "automatic");
+    assert.equal(createStateStore(file).read().browserInteractionMode, "manual");
     assert.equal(createStateStore(file).read().zeroRiskProEnabled, false);
     fs.writeFileSync(file, JSON.stringify({
       version: 1,

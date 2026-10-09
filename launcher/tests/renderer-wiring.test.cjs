@@ -10,69 +10,6 @@ const electronMain = fs.readFileSync(path.join(launcherRoot, "electron", "main.c
 const browserHostSource = fs.readFileSync(path.join(launcherRoot, "electron", "browser-host.cjs"), "utf8");
 const preloadSource = fs.readFileSync(path.join(launcherRoot, "electron", "preload.cjs"), "utf8");
 
-test("Bigger Context waits for startup and route recovery without invalidating healthy setup", async () => {
-  const vm = require("node:vm");
-  for (const fails of [false, true]) {
-    const startupAuthenticationRefresh = new Promise(() => {});
-    let completeRuntime;
-    const runtimeReady = new Promise(resolve => { completeRuntime = resolve; });
-    let finishRuntimeStartup;
-    const runtimeStartup = new Promise(resolve => { finishRuntimeStartup = resolve; });
-    let startupSettled = false;
-    const calls = [];
-    const handlers = new Map();
-    const config = { mode: "full", experimentalBiggerContext: false };
-    const state = { coreSetupComplete: true, codexCatalogVerified: true };
-    const stateStore = { read: () => state, update: patch => Object.assign(state, patch) };
-    const logger = { info() {}, error() {} };
-    const context = vm.createContext({
-      runtimeStartup, finishRuntimeStartup: () => { startupSettled = true; finishRuntimeStartup(); },
-      startupAuthenticationRefresh, logger, stateStore, IS_DEV_PROFILE: false,
-      ipcMain: { on() {} }, registerLoggedIpc: (_ipc, _logger, channel, handler) => handlers.set(channel, handler),
-      send() {}, publishOperation() {}, startCatalogVerificationMonitor() {},
-      browserHost: { turnTabs: new Map() },
-      releaseRetainedConversation() {},
-      restoreCodexRouteAfterRuntimeFailure: async () => { calls.push("recovery"); return {}; },
-      limitsController: { snapshot: () => ({ enabled: false }) },
-      runtimeSupervisor: {
-        readConfig: () => config,
-        startIfConfigured: async () => {
-          calls.push("startup");
-          await runtimeReady;
-          if (fails) throw new Error("actual startup failure");
-          return { status: "ready" };
-        },
-      },
-      runtimeHost: {
-        currentOperation: () => null,
-        upgradeManagedRuntime: async () => ({ updated: false }),
-        runtimeConfigSnapshot: () => ({ configured: true, config }),
-        connectBridgeRoute: async () => { calls.push("route"); return { changed: false }; },
-        setBiggerContext: async enabled => {
-          assert.equal(startupSettled, true, "settings must wait through startup recovery too");
-          calls.push("setting");
-          config.experimentalBiggerContext = enabled;
-          return { enabled };
-        },
-      },
-    });
-    vm.runInContext(electronMain.slice(electronMain.indexOf("function syncBrowserPreferences("), electronMain.indexOf("async function requestQuit("))
-      + "\nregisterIpc({ logger, stateStore });", context);
-    const start = electronMain.indexOf("} else void (async () => {");
-    vm.runInContext(electronMain.slice(start + "} else ".length, electronMain.indexOf('  app.on("before-quit"', start)), context);
-    const setting = handlers.get("launcher:bigger-context")({}, true);
-    // Runtime startup proceeds even if the browser session check never completes.
-    // Settings still wait for runtime readiness, and read-only UI stays usable.
-    assert.equal((await handlers.get("launcher:limits")()).enabled, false);
-    assert.deepEqual(calls, ["startup"]);
-    completeRuntime();
-    await setting;
-    assert.deepEqual(calls, fails ? ["startup", "recovery", "setting"] : ["startup", "route", "setting"]);
-    assert.equal(state.experimentalBiggerContext, true);
-    assert.equal(state.coreSetupComplete, !fails, "only a real startup failure may invalidate setup");
-  }
-});
-
 test("embedded ChatGPT is measured only after its animated surface mounts", () => {
   assert.match(appSource, /const \[browserSlot, setBrowserSlot\] = useState<HTMLDivElement \| null>\(null\)/);
   assert.match(appSource, /setBrowserSurfaceActive\(browserSurfaceActive\)\.then\(\(\) => \{/);
@@ -254,13 +191,10 @@ test("DEV launcher exposes its profile and supervises only its Full-mode MCP run
   assert.match(electronMain, /if \(IS_DEV_PROFILE\) \{[\s\S]*?config\?\.mode === "full"[\s\S]*?runtimeSupervisor\.startIfConfigured\(\)[\s\S]*?\} else void \(async \(\) => \{/);
   assert.match(electronMain, /await runtimeSupervisor\?\.shutdown\(\{ cancelActiveTurns: true, force: true \}\)/);
   assert.match(electronMain, /packaged:\s*app\.isPackaged && !IS_DEV_PROFILE/);
-  assert.match(electronMain, /IS_DEV_PROFILE && !stateStore\.read\(\)\.onboardingComplete/);
+  assert.match(electronMain, /if \(IS_DEV_PROFILE\) \{[\s\S]*?autoStart:\s*false/);
   assert.match(electronMain, /onboardingComplete:\s*true,[\s\S]*?autoStart:\s*false/);
   assert.match(appSource, /snapshot\.profile === "development"/);
   assert.match(appSource, /data-profile=\{snapshot\.profile\}/);
-  assert.match(appSource, /manualBiggerContextUnavailable[\s\S]*?copy\.biggerContextBody/);
-  assert.match(appSource, /api!\.setBiggerContext\(enabled\)/);
-  assert.match(electronMain, /runtimeHost\.setBiggerContext\(enabled === true\)/);
   assert.doesNotMatch(electronMain, /IS_DEV_PROFILE && key === "experimentalBiggerContext"/);
 });
 
@@ -337,22 +271,6 @@ test("passkey buttons show launch progress, wait for Chrome, and preserve import
       assert.ok(localized[key].length > 5);
     }
   }
-});
-
-test("Bigger Context startup recommendation reuses the persisted setting and setup transaction", () => {
-  assert.match(
-    appSource,
-    /const \[biggerContextRecommendationOpen, setBiggerContextRecommendationOpen\] = useState\([\s\S]*?snapshot\.state\.browserInteractionMode === "automatic"[\s\S]*?snapshot\.state\.coreSetupComplete === true[\s\S]*?snapshot\.state\.biggerContextAvailable === true[\s\S]*?!snapshot\.state\.experimentalBiggerContext,/,
-  );
-  assert.match(appSource, /&& !biggerContextRecommendationOpen;/);
-  assert.match(appSource, /updateState\(await api!\.setBiggerContext\(enabled\)\)/);
-  assert.match(
-    appSource,
-    /<BiggerContextRecommendation[\s\S]*?checked=\{snapshot\.state\.experimentalBiggerContext\}[\s\S]*?onClose=\{\(\) => setBiggerContextRecommendationOpen\(false\)\}/,
-  );
-  assert.match(appSource, /<Switch checked=\{checked\} disabled=\{busy\} onChange=\{onChange\} \/>/);
-  assert.match(stylesSource, /\.bigger-context-recommendation-backdrop\s*\{[^}]*position:\s*fixed;/s);
-  assert.doesNotMatch(stylesSource, /\.bigger-context-recommendation-backdrop\s*\{[^}]*backdrop-filter:/s);
 });
 
 test("Zero Risk setup commits state after the runtime transaction and preserves manual inspection boundaries", () => {
@@ -677,7 +595,6 @@ test("browser preference controls are translated, disabled in Zero Risk, and inv
     for (const [property, label, body, unavailable] of [
       ["experimentalFreshConversationPerTurn", "freshConversation", "freshConversationBody", "manualFreshConversationUnavailable"],
       ["autoApproveToolCalls", "autoApproveTools", "autoApproveToolsBody", "manualAutoApproveUnavailable"],
-      ["experimentalBiggerContext", "biggerContext", "biggerContextBody", "manualBiggerContextUnavailable"],
     ]) {
       for (const key of [label, body, unavailable, "toolApprovalNeeded", "toolApprovalPendingBody"]) {
         assert.equal(typeof copy[key], "string");
@@ -841,7 +758,6 @@ test("plugin name editor fixes Codex and edits Native2 before asking to reconfig
   assert.equal(configureMode, "automatic");
 });
 
-
 test("catalog recovery clears its error banner but preserves a newer unrelated failure", () => {
   const vm = require("node:vm");
   const source = appSource.slice(appSource.indexOf("const unsubscribeOperation = api.onOperation"), appSource.indexOf("const unsubscribeLog ="));
@@ -859,4 +775,10 @@ test("catalog recovery clears its error banner but preserves a newer unrelated f
   callback({ name: "setup", status: "failed", message: "Setup error" });
   callback({ name: "catalog-verification", status: "completed", message: "Loaded" });
   assert.equal(error, "Setup error");
+});
+
+test("startup opens the launcher without social onboarding or a context toggle", () => {
+  assert.doesNotMatch(appSource, /function Onboarding|<Onboarding|BiggerContextRecommendation|setBiggerContext/);
+  assert.doesNotMatch(electronMain, /Open the GitHub and X pages before continuing|handle\("launcher:bigger-context"/);
+  assert.doesNotMatch(preloadSource, /launcher:bigger-context/);
 });

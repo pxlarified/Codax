@@ -50,7 +50,7 @@ export interface BrowserState {
   canGoForward: boolean;
   zoomFactor: number;
   activeTabId: string;
-  maxTabs: number;
+  maxTabs: number | null;
   tabs: BrowserTabState[];
 }
 
@@ -174,7 +174,6 @@ export interface LauncherApi {
   setConnectorNameSuffix(suffix: string): Promise<LauncherState>;
   setMcpStep(step: number): Promise<LauncherState>;
   setAutostart(enabled: boolean): Promise<{ state: LauncherState; supported: boolean; enabled: boolean }>;
-  setBiggerContext(enabled: boolean): Promise<LauncherState>;
   setSkillAttachments(enabled: boolean): Promise<LauncherState>;
   setAutoApproveToolCalls(enabled: boolean): Promise<LauncherState>;
   setFreshConversationPerTurn(enabled: boolean): Promise<LauncherState>;

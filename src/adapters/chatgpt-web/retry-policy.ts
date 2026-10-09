@@ -71,3 +71,30 @@ export class ChatGptWebTurnRetryPolicy {
 }
 
 export const chatGptWebTurnRetryPolicy = new ChatGptWebTurnRetryPolicy();
+
+/** One automatic native compaction attempt per logical Codex turn. */
+export class ChatGptWebInputCompactionPolicy {
+  private readonly entries = new Map<string, number>();
+
+  constructor(private readonly ttlMs = RETRY_BUDGET_TTL_MS) {}
+
+  request(key: string, now = Date.now()): boolean {
+    this.prune(now);
+    if (this.entries.has(key)) return false;
+    this.entries.set(key, now);
+    return true;
+  }
+
+  clear(key: string): void {
+    this.entries.delete(key);
+  }
+
+  private prune(now: number): void {
+    for (const [key, updatedAt] of this.entries) {
+      if (now - updatedAt >= this.ttlMs) this.entries.delete(key);
+    }
+  }
+}
+
+/** HTTP requests construct fresh adapters, so this guard intentionally lives at module scope. */
+export const chatGptWebInputCompactionPolicy = new ChatGptWebInputCompactionPolicy();

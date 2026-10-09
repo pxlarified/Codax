@@ -86,10 +86,10 @@ import {
 } from "../../chatgpt-web-models";
 import { LauncherBrowserHelperClient } from "./launcher-helper-client";
 import { assertChatGptModelFamily, selectChatGptModelFamily } from "./model-selection";
-import { MAX_CHATGPT_BROWSER_TABS } from "./concurrency";
 import {
   ChatGptCompactionHandoffAccepted,
   ChatGptWebAdapterError,
+  chatGptBrowserInputLimitError,
   chatGptBrowserTabClosedError,
   chatGptRetainedConversationUnavailableError,
   chatGptStoppedThinkingError,
@@ -108,7 +108,6 @@ import type {
   ChatGptTurnProgressReader,
 } from "./turn-progress";
 
-export { MAX_CHATGPT_BROWSER_TABS } from "./concurrency";
 
 const workers = new Map<string, ChatGptBrowserWorker>();
 
@@ -888,9 +887,8 @@ export class ChatGptSubmissionRejectionObserver {
     this.checks.push(withChatGptBrowserObservationTimeout(check, 3_000)
       .then(rejected => {
         if (generation !== this.generation || !rejected) return undefined;
-        const error = new ChatGptWebAdapterError(
-          "ChatGPT rejected this message because it exceeds the selected mode's input-size limit. Compact the task before retrying.",
-          { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
+        const error = chatGptBrowserInputLimitError(
+          "ChatGPT could not accept the full message. Automatic compaction is required.",
         );
         this.onRejected?.(error);
         return error;
@@ -1033,9 +1031,8 @@ export function assertChatGptWebInputWithinLimits(
     modelId === CHATGPT_WEB_LUNA_MODEL_ID
     && estimatedInputTokens > CHATGPT_LUNA_BROWSER_INPUT_TOKEN_BUDGET
   ) {
-    throw new ChatGptWebAdapterError(
+    throw chatGptBrowserInputLimitError(
       `This Luna turn requires ${estimatedInputTokens.toLocaleString("en-US")} estimated input tokens, which exceeds the measured ${CHATGPT_LUNA_BROWSER_INPUT_TOKEN_BUDGET.toLocaleString("en-US")}-token ChatGPT Free browser transport budget. Completed Luna history is already replaced by its rolling checkpoint; the remaining payload is the current Codex turn and cannot be reduced by /compact.`,
-      { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
     );
   }
   const { contextWindow } = resolveChatGptWebContextLimits(modelId, effort, capabilities);
@@ -1049,22 +1046,19 @@ export function assertChatGptWebInputWithinLimits(
     && promptChars !== undefined
     && promptChars > browserComposerCharLimit
   ) {
-    throw new ChatGptWebAdapterError(
+    throw chatGptBrowserInputLimitError(
       `This prompt contains ${promptChars.toLocaleString("en-US")} inline characters, which exceeds the measured ${browserComposerCharLimit.toLocaleString("en-US")}-character ChatGPT composer boundary for this account and effort. Run /compact, then retry this Web model.`,
-      { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
     );
   }
   if (browserMessageTokenLimit !== undefined && estimatedMessageTokens > browserMessageTokenLimit) {
-    throw new ChatGptWebAdapterError(
+    throw chatGptBrowserInputLimitError(
       `This prompt requires ${estimatedMessageTokens.toLocaleString("en-US")} visible message tokens, which exceeds the measured ${browserMessageTokenLimit.toLocaleString("en-US")}-token ChatGPT browser message boundary for this account and effort. The model context window is ${contextWindow.toLocaleString("en-US")} tokens; run /compact to reduce the next browser message without changing that model window.`,
-      { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
     );
   }
   if (estimatedInputTokens < contextWindow) return;
-  throw new ChatGptWebAdapterError(
+  throw chatGptBrowserInputLimitError(
     `This task is estimated at ${estimatedInputTokens.toLocaleString("en-US")} input tokens, which exceeds the ${contextWindow.toLocaleString("en-US")}-token context window for this ChatGPT Web model. Switch to a model with a larger context window, run /compact, then retry this Web model.`,
-    { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
-  );
+    );
 }
 
 export function assertChatGptWebMultipartInputWithinLimits(
@@ -2375,11 +2369,6 @@ export class ChatGptBrowserWorker {
   run(turn: BrowserTurn): Promise<string> {
     if (this.activeRuns.has(turn.traceId)) {
       return Promise.reject(new Error(`Duplicate ChatGPT web browser turn: ${turn.traceId}`));
-    }
-    if (this.activeRuns.size >= MAX_CHATGPT_BROWSER_TABS) {
-      return Promise.reject(new Error(
-        `ChatGPT Web supports at most ${MAX_CHATGPT_BROWSER_TABS} simultaneous browser turns; close or finish a browser tab before starting another`,
-      ));
     }
     const useHelper = this.config.browserHost === "launcher" && process.env.CODEX_CHATGPT_WEB_BROWSER_HELPER_PROCESS !== "1";
     if (useHelper) {

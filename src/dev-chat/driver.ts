@@ -9,7 +9,7 @@ import {
   CHATGPT_LUNA_BROWSER_INPUT_TOKEN_BUDGET,
   CHATGPT_WEB_LUNA_BACKEND_MODEL,
   requireChatGptWebModelRoute,
-  resolveChatGptWebContextLimits,
+  resolveChatGptWebModelContextLimits,
 } from "../chatgpt-web-models";
 import type { AppConfig } from "../config";
 import { parseRequest } from "../responses/parser";
@@ -529,6 +529,12 @@ export class DevChatDriver {
       const calls = toolCalls(output);
       if (calls.length === 0) {
         if (envelope.end_turn !== true) {
+          if (output.length === 0 && roundUsage.inputTokens >= context.autoCompactTokenLimit) {
+            workingInput = await this.compactInput(state, workingInput, "automatic", emit);
+            pendingCompactions += 1;
+            compactions += 1;
+            continue;
+          }
           throw new Error("DEV Responses turn completed without tool calls or end_turn=true");
         }
         finalText = outputText(output);
@@ -589,7 +595,7 @@ export class DevChatDriver {
       extraHighAvailable: this.config.extraHighAvailable === true,
       proAvailable: this.config.proAvailable,
     }, this.config.experimentalBiggerContext ? { captureLunaCheckpoint: false } : {});
-    const limits = resolveChatGptWebContextLimits(
+    const limits = resolveChatGptWebModelContextLimits(
       route.backendModel, route.adapterEffort, this.config,
       route.interactionMode === "automatic" ? route.modelFamily : undefined,
     );

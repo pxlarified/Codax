@@ -87,3 +87,14 @@ export function chatGptRetainedConversationUnavailableError(): ChatGptWebAdapter
     },
   );
 }
+
+/** A full message no longer fits the browser transport. */
+export function chatGptBrowserInputLimitError(message: string): ChatGptWebAdapterError {
+  return new ChatGptWebAdapterError(message, {
+    status: 400, errorType: "invalid_request_error", code: "chatgpt_browser_input_limit", retryable: false,
+  });
+}
+
+export function isChatGptBrowserInputLimitError(error: unknown): error is ChatGptWebAdapterError {
+  return error instanceof ChatGptWebAdapterError && error.code === "chatgpt_browser_input_limit";
+}

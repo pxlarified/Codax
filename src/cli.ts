@@ -77,14 +77,12 @@ Setup options:
   --restart-service            Explicitly restart this project's daemon after an update
   --login                      Refresh the stored ChatGPT login even if one exists
   --auto-approve-tool-calls    Opt in to per-call browser clicks on "Allow once" prompts
-  --bigger-context             Enable experimental adaptive 1/2/6-message context
   --fresh-conversation         Start each automatic turn in a fresh browser chat
   --retained-conversation      Reuse the browser chat between turns (default)
   --saved-chats                Keep task conversations in ChatGPT history
   --temporary-chats            Use Temporary Chat for task conversations (default)
   --skill-attachments         Experimental selected skills as text attachments
   --inline-skills             Keep selected skills inline (default)
-  --standard-context           Disable experimental multi-message context
   --acknowledge-unofficial     Accept the one-time unofficial-browser-automation notice
 
 Global:
@@ -326,7 +324,8 @@ async function setupCommand(args: string[]): Promise<void> {
   if (biggerContext && standardContext) {
     throw new Error("Choose at most one context mode: --bigger-context or --standard-context");
   }
-  if (biggerContext || standardContext) options.experimentalBiggerContext = biggerContext;
+  if (biggerContext) throw new Error("--bigger-context has been removed. Browser context now compacts automatically.");
+  if (standardContext) options.experimentalBiggerContext = false;
   if (skillAttachments || inlineSkills) options.experimentalSkillAttachments = skillAttachments;
   const zeroRiskPro = takeFlag(args, "--zero-risk-pro");
   const zeroRiskDefault = takeFlag(args, "--zero-risk-default");

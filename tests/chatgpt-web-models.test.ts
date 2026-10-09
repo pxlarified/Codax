@@ -55,13 +55,11 @@ describe("fixed ChatGPT Web model routes", () => {
 
   test("exposes only Plus-eligible routes without the Pro account capability", () => {
     expect(availableChatGptWebModelRoutes(plus).map(route => route.slug)).toEqual([
-      "chatgpt-web/gpt-6-sol-instant",
       "chatgpt-web/gpt-6-sol",
-      "chatgpt-web/gpt-5.6-sol-instant",
       "chatgpt-web/gpt-5.6-sol",
     ]);
     expect(availableChatGptWebModelRoutes({ solAvailable: true, extraHighAvailable: true, proAvailable: true }))
-      .toEqual(CHATGPT_WEB_MODEL_ROUTES);
+      .toEqual(CHATGPT_WEB_MODEL_ROUTES.filter(route => !route.legacy));
     expect(() => requireChatGptWebModelRoute("chatgpt-web/extra-high", plus))
       .toThrow("Extra High is not available for this account");
     expect(() => requireChatGptWebModelRoute("chatgpt-web/pro", plus))
@@ -71,7 +69,7 @@ describe("fixed ChatGPT Web model routes", () => {
   test("Extra High stays routable without granting Pro or Pro-sized context", () => {
     const config = { ...defaultConfig("full"), extraHighAvailable: true, proAvailable: false };
     expect(availableChatGptWebModelRoutes(config).map(route => route.slug))
-      .toEqual(["chatgpt-web/gpt-6-sol-instant", "chatgpt-web/gpt-6-sol", "chatgpt-web/gpt-5.6-sol-instant", "chatgpt-web/gpt-5.6-sol"]);
+      .toEqual(["chatgpt-web/gpt-6-sol", "chatgpt-web/gpt-5.6-sol"]);
     const request = parsed("chatgpt-web/extra-high", "low");
     expect(routeChatGptWebRequest(request, config).adapterEffort).toBe("xhigh");
     expect(request.options.reasoning).toBe("xhigh");
@@ -179,7 +177,7 @@ describe("fixed ChatGPT Web model routes", () => {
       effectiveContextWindowPercent: 85,
       autoCompactTokenLimit: 95_000,
     });
-    for (const effort of ["medium", "high", "xhigh"] as const) {
+    for (const effort of ["low", "medium", "high", "xhigh"] as const) {
       expect(resolveChatGptWebContextLimits(CHATGPT_WEB_BACKEND_MODEL, effort, pro)).toEqual({
         contextWindow: 111_193,
         effectiveContextWindowPercent: 85,
@@ -218,25 +216,6 @@ describe("fixed ChatGPT Web model routes", () => {
     });
   });
 
-  test("triples Sol context and compaction limits only when Bigger Context is enabled", () => {
-    expect(resolveChatGptWebContextLimits(CHATGPT_WEB_BACKEND_MODEL, "max", {
-      ...pro,
-      experimentalBiggerContext: true,
-    })).toEqual({
-      contextWindow: 336_579,
-      effectiveContextWindowPercent: 85,
-      autoCompactTokenLimit: 285_000,
-    });
-    expect(resolveChatGptWebContextLimits(CHATGPT_WEB_LUNA_BACKEND_MODEL, "low", {
-      solAvailable: false,
-      extraHighAvailable: false, proAvailable: false,
-      experimentalBiggerContext: true,
-    })).toEqual({
-      contextWindow: 84_000,
-      effectiveContextWindowPercent: 71,
-      autoCompactTokenLimit: 59_424,
-    });
-  });
 
   test("binds the selected model authoritatively and ignores a conflicting request effort", () => {
     const request = parsed("chatgpt-web/high", "low");
@@ -326,7 +305,7 @@ describe("fixed ChatGPT Web model routes", () => {
   test("new families honor effort, gate availability, and separate pinned retained conversations", () => {
     const config = { ...defaultConfig("full"), extraHighAvailable: true, proAvailable: true };
     for (const family of ["5.6", "6"] as const) {
-      for (const effort of ["medium", "high", "xhigh"] as const) {
+      for (const effort of ["low", "medium", "high", "xhigh"] as const) {
         const request = parsed(`chatgpt-web/gpt-${family}-sol`, effort);
         routeChatGptWebRequest(request, config);
         expect(request.options.reasoning).toBe(effort);
@@ -336,7 +315,7 @@ describe("fixed ChatGPT Web model routes", () => {
       routeChatGptWebRequest(instant, config);
       expect(instant._chatgptModelFamily).toBe(family);
       expect(instant.options.reasoning).toBe("low");
-      for (const effort of ["low", "max", "ultra", "invented"]) {
+      for (const effort of ["max", "ultra", "invented"]) {
         expect(() => routeChatGptWebRequest(parsed(`chatgpt-web/gpt-${family}-sol`, effort), config)).toThrow("does not support effort");
       }
       expect(() => routeChatGptWebRequest(parsed(`chatgpt-web/gpt-${family}-sol`, "xhigh"), {

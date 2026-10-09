@@ -303,9 +303,7 @@ function baseConfig(
   if (options.experimentalFreshConversationPerTurn !== undefined) {
     config.experimentalFreshConversationPerTurn = options.experimentalFreshConversationPerTurn;
   }
-  if (options.experimentalBiggerContext !== undefined) {
-    config.experimentalBiggerContext = options.experimentalBiggerContext;
-  }
+  config.experimentalBiggerContext = false;
   if (options.zeroRiskProEnabled !== undefined) {
     if (config.browserInteractionMode !== "manual") {
       throw new Error("Zero Risk Pro can be configured only with --zero-risk-browser-interaction");

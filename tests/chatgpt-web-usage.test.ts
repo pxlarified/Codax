@@ -144,7 +144,7 @@ test("Plus history is rebalanced into smaller Instant uploads and a larger selec
   }
 }, 30_000);
 
-test("multipart planning leaves room for final attachments and execution instructions without losing history", () => {
+test("retired multipart planning cannot expand the browser input boundary", () => {
   for (const scenario of [
     { extraHighAvailable: false, proAvailable: false, images: 3, schema: false },
     { extraHighAvailable: true, proAvailable: true, images: 10, schema: false },
@@ -178,6 +178,6 @@ test("multipart planning leaves room for final attachments and execution instruc
       estimateCompiledChatGptWebInputTokens(compiled, parsed.modelId), Math.max(...tokens),
       parsed.modelId, "high", caps, Math.max(...chars), 6,
       { stagingEffort: stage.effort, maxStageMessageTokens, maxStageChars, finalMessageTokens: tokens.at(-1)!, finalMessageChars: chars.at(-1)!, finalImageTokens: estimateChatGptWebImageTokens(compiled) },
-    )).not.toThrow();
+    )).toThrow("six-part ceiling");
   }
 }, 30_000);

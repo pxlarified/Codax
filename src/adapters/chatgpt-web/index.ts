@@ -458,7 +458,9 @@ export function createChatGptWebAdapter(
     const resumeInput = conversationKey
       ? retainedConversationResumeRequest(checkpointInput.parsed)
       : undefined;
-    const retainConversation = conversationKey !== undefined;
+    // Keep the active conversation identity for tools and compaction, but never retain a
+    // terminal document. Physical completion also cleans up after a disconnected observer.
+    const retainConversation = false;
     const releaseRetainedConversation = conversationKey && retainedLauncherDescriptor
       ? async () => {
         await releaseLauncherRetainedConversation(retainedLauncherDescriptor, conversationKey);
@@ -712,7 +714,7 @@ export function createChatGptWebAdapter(
         capabilities: turnCapabilities,
         prepare: () => prepareWith(checkpointInput.parsed),
         ...(resumeInput ? { prepareResume: () => prepareWith(resumeInput) } : {}),
-        ...(retainConversation ? { retainConversation: true, conversationKey } : {}),
+        ...(conversationKey ? { conversationKey } : {}),
         abortSignal: browserAbort.signal,
         ...(parsed._compactionRequest ? { compaction: true } : {}),
         ...submissionLifecycle,
@@ -779,7 +781,7 @@ export function createChatGptWebAdapter(
       capabilities: turnCapabilities,
       prepare: () => prepareWith(checkpointInput.parsed),
       ...(resumeInput ? { prepareResume: () => prepareWith(resumeInput) } : {}),
-      ...(retainConversation ? { retainConversation: true, conversationKey } : {}),
+      ...(conversationKey ? { conversationKey } : {}),
       abortSignal: browserAbort.signal,
       ...(parsed._compactionRequest ? { compaction: true } : {}),
       ...submissionLifecycle,

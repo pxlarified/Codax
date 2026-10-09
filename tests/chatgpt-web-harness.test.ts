@@ -394,9 +394,9 @@ describe("ChatGPT outer-native harness v4", () => {
     const tokens: string[] = [];
     let browserMessages = 0;
     (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = async turn => {
+      expect(turn.retainConversation).not.toBe(true);
       if (freshConversation) {
         expect(turn.prepareResume).toBeUndefined();
-        expect(turn.retainConversation).not.toBe(true);
       }
       expect(turn.captureLunaCheckpoint).toBe(luna ? true : undefined);
       const prepared = await turn.prepare();

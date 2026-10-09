@@ -24,6 +24,22 @@ export type ChatGptWebCodexEffort = "low" | "medium" | "high" | "xhigh" | "max" 
 export type ChatGptWebAdapterEffort = "low" | "medium" | "high" | "xhigh" | "max";
 export type ChatGptWebModelFamily = "5.6" | "6";
 
+/** Model capacity is independent of the payload that fits one browser message. */
+export const CHATGPT_WEB_SOL_MODEL_CONTEXT_WINDOW = 272_000;
+export const CHATGPT_WEB_SOL_MODEL_AUTO_COMPACT_TOKEN_LIMIT = 244_800;
+
+export function resolveChatGptWebModelContextLimits(
+  backendModel: ChatGptWebBackendModel,
+  effort: ChatGptWebAdapterEffort,
+  capabilities: ChatGptWebAccountCapabilities,
+  modelFamily?: ChatGptWebModelFamily,
+): ChatGptWebContextLimits {
+  if (isChatGptWebZeroRiskBackendModel(backendModel) || backendModel === CHATGPT_WEB_LUNA_BACKEND_MODEL) {
+    return resolveChatGptWebContextLimits(backendModel, effort, { ...capabilities, experimentalBiggerContext: false }, modelFamily);
+  }
+  return contextLimits(CHATGPT_WEB_SOL_MODEL_CONTEXT_WINDOW, CHATGPT_WEB_SOL_MODEL_AUTO_COMPACT_TOKEN_LIMIT);
+}
+
 /**
  * Measured Plus browser transport windows, including the fixed hidden ChatGPT platform reserve.
  * Codex compacts the visible task at the lower explicit threshold before the next browser turn is
@@ -198,18 +214,7 @@ export function resolveChatGptWebContextLimits(
   } else {
     throw new Error(`ChatGPT Plus context limit is not defined for unavailable effort: ${effort}`);
   }
-  if (!capabilities.experimentalBiggerContext
-    || !supportsChatGptWebBiggerContext(backendModel, effort, capabilities, modelFamily)) return limits;
-  if (modelFamily === "6" && effort !== "max") {
-    return contextLimits(
-      CHATGPT_WEB_GPT6_SOL_BIGGER_CONTEXT_WINDOW,
-      CHATGPT_WEB_GPT6_SOL_BIGGER_AUTO_COMPACT_TOKEN_LIMIT,
-    );
-  }
-  return contextLimits(
-    limits.contextWindow * CHATGPT_WEB_BIGGER_CONTEXT_MULTIPLIER,
-    limits.autoCompactTokenLimit * CHATGPT_WEB_BIGGER_CONTEXT_MULTIPLIER,
-  );
+  return limits;
 }
 
 /** Resolve limits of one visible ChatGPT composer message, independently of model context. */
@@ -461,6 +466,7 @@ export const CHATGPT_WEB_LEGACY_MODEL_ROUTES: readonly ChatGptWebAutomaticModelR
 export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] = [
   {
     slug: "chatgpt-web/gpt-6-sol-instant",
+    legacy: true,
     displayName: "GPT-6 Sol Instant (Web)",
     description: "GPT-6 Sol Instant through ChatGPT. Uses standard context even when Bigger Context is enabled.",
     interactionMode: "automatic",
@@ -474,17 +480,18 @@ export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] 
   {
     slug: "chatgpt-web/gpt-6-sol",
     displayName: "GPT-6 Sol (Web)",
-    description: "GPT-6 Sol with Medium, High, or account-supported Extra High. Bigger Context supports up to 240,000 tokens on Pro; other accounts use standard context.",
+    description: "GPT-6 Sol through ChatGPT with selectable reasoning effort.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,
     modelFamily: "6",
     codexEffort: "high",
     adapterEffort: "high",
-    supportedCodexEfforts: ["medium", "high", "xhigh"],
+    supportedCodexEfforts: ["low", "medium", "high", "xhigh"],
     requiresPro: false,
   },
   {
     slug: "chatgpt-web/gpt-5.6-sol-instant",
+    legacy: true,
     displayName: "GPT-5.6 Sol Instant (Web)",
     description: "GPT-5.6 Sol Instant through ChatGPT, with its own context and compaction budget.",
     interactionMode: "automatic",
@@ -498,13 +505,13 @@ export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] 
   {
     slug: "chatgpt-web/gpt-5.6-sol",
     displayName: "GPT-5.6 Sol (Web)",
-    description: "GPT-5.6 Sol through ChatGPT with Medium, High, or account-supported Extra High reasoning.",
+    description: "GPT-5.6 Sol through ChatGPT with selectable reasoning effort.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,
     modelFamily: "5.6",
     codexEffort: "high",
     adapterEffort: "high",
-    supportedCodexEfforts: ["medium", "high", "xhigh"],
+    supportedCodexEfforts: ["low", "medium", "high", "xhigh"],
     requiresPro: false,
   },
   {
@@ -569,6 +576,7 @@ export function availableChatGptWebModelRoutes(
     ? [...CHATGPT_WEB_MODEL_ROUTES, ...CHATGPT_WEB_LEGACY_MODEL_ROUTES]
     : CHATGPT_WEB_MODEL_ROUTES;
   return candidates.filter(route =>
+    (includeLegacy || !route.legacy) &&
     (!route.requiresPro || capabilities.proAvailable)
     && (!route.requiresExtraHigh || capabilities.extraHighAvailable));
 }

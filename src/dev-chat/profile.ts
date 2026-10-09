@@ -90,7 +90,7 @@ export function readDevChatExperimentalFeatures(
   if (enabled !== undefined && typeof enabled !== "boolean") {
     throw new Error(`Invalid Bigger Context preference in ${paths.configPath}`);
   }
-  return { biggerContext: enabled === true };
+  return { biggerContext: false };
 }
 
 export function activateDevProfileEnvironment(paths = resolveDevProfilePaths()): DevProfilePaths {

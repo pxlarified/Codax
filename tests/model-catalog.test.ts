@@ -10,7 +10,7 @@ import {
   CHATGPT_WEB_LEGACY_MODEL_ROUTES,
   availableChatGptWebModelRoutes,
   chatGptWebRouteEfforts,
-  resolveChatGptWebContextLimits,
+  resolveChatGptWebModelContextLimits,
 } from "../src/chatgpt-web-models";
 import { augmentNativeModelCatalog, buildChatGptWebModel } from "../src/model-catalog";
 
@@ -64,15 +64,15 @@ describe("native /models augmentation", () => {
     expect(models.slice(0, 3)).toEqual(originalModels);
     const web = models.slice(3).filter(model => model.visibility === "list");
     const legacy = models.slice(3).filter(model => model.visibility === "hide");
-    expect(legacy.map(model => model.slug)).toEqual(CHATGPT_WEB_LEGACY_MODEL_ROUTES.map(route => route.slug));
+    expect(legacy.map(model => model.slug)).toEqual([...CHATGPT_WEB_MODEL_ROUTES.filter(route => route.legacy), ...CHATGPT_WEB_LEGACY_MODEL_ROUTES].map(route => route.slug));
     expect(legacy.map(model => [model.context_window, model.auto_compact_token_limit])).toEqual([
-      [111_193, 95_000], [111_193, 95_000], [111_193, 95_000], [111_193, 95_000], [112_193, 95_000],
+      ...Array.from({ length: 7 }, () => [272_000, 244_800]),
     ]);
-    expect(web.map(model => model.slug)).toEqual(CHATGPT_WEB_MODEL_ROUTES.map(route => route.slug));
-    expect(web.map(model => model.display_name)).toEqual(CHATGPT_WEB_MODEL_ROUTES.map(route => route.displayName));
+    expect(web.map(model => model.slug)).toEqual(CHATGPT_WEB_MODEL_ROUTES.filter(route => !route.legacy).map(route => route.slug));
+    expect(web.map(model => model.display_name)).toEqual(CHATGPT_WEB_MODEL_ROUTES.filter(route => !route.legacy).map(route => route.displayName));
     for (const [index, model] of web.entries()) {
-      const route = CHATGPT_WEB_MODEL_ROUTES[index]!;
-      const limits = resolveChatGptWebContextLimits(route.backendModel, route.adapterEffort, config);
+      const route = CHATGPT_WEB_MODEL_ROUTES.filter(route => !route.legacy)[index]!;
+      const limits = resolveChatGptWebModelContextLimits(route.backendModel, route.adapterEffort, config);
       expect(model).toMatchObject({
         slug: route.slug,
         display_name: route.displayName,
@@ -93,11 +93,11 @@ describe("native /models augmentation", () => {
       expect((model.supported_reasoning_levels as Array<{ effort: string }>).map(level => level.effort))
         .toEqual([...chatGptWebRouteEfforts(route, config)]);
     }
-    expect((web[1]!.supported_reasoning_levels as Array<{ effort: string }>).map(level => level.effort))
-      .toEqual(["medium", "high", "xhigh"]);
+    expect((web[0]!.supported_reasoning_levels as Array<{ effort: string }>).map(level => level.effort))
+      .toEqual(["low", "medium", "high", "xhigh"]);
     expect(() => buildChatGptWebModel(originalModels[1], {
       ...CHATGPT_WEB_MODEL_ROUTES[1]!, supportedCodexEfforts: ["low", "medium"],
-    }, { ...config, proAvailable: false })).toThrow("Cannot group different context budgets");
+    }, { ...config, proAvailable: false })).not.toThrow();
   });
 
   test("publishes Bigger Context limits in the Codex model catalog", () => {
@@ -107,8 +107,8 @@ describe("native /models augmentation", () => {
     config.experimentalBiggerContext = true;
     const models = augmentNativeModelCatalog(source(), config).models as Array<Record<string, unknown>>;
     const pro = models.find(model => model.slug === "chatgpt-web/pro")!;
-    expect(pro.context_window).toBe(336_579);
-    expect(pro.auto_compact_token_limit).toBe(285_000);
+    expect(pro.context_window).toBe(272_000);
+    expect(pro.auto_compact_token_limit).toBe(244_800);
   });
 
   test("publishes measured GPT-6 context by account and effort while preserving GPT-5.6 and Pro budgets", () => {
@@ -124,17 +124,16 @@ describe("native /models augmentation", () => {
       ] as const) {
         const six = models.find(model => model.slug === `chatgpt-web/gpt-6-${suffix}`)!;
         const expanded = proAvailable && suffix === "sol";
-        expect(six).toMatchObject({ context_window: expanded ? 240_000 : window,
-          max_context_window: expanded ? 240_000 : window, auto_compact_token_limit: expanded ? 220_000 : compact });
-        expect(six.description).toContain("standard context");
+        expect(six).toMatchObject({ context_window: 272_000,
+          max_context_window: 272_000, auto_compact_token_limit: 244_800 });
         expect(models.find(model => model.slug === `chatgpt-web/gpt-5.6-${suffix}`)).toMatchObject({
-          context_window: window * 3, auto_compact_token_limit: compact * 3,
+          context_window: 272_000, auto_compact_token_limit: 244_800,
         });
       }
       if (proAvailable) {
         for (const family of ["5.6", "6"]) {
           expect(models.find(model => model.slug === `chatgpt-web/gpt-${family}-pro`)).toMatchObject({
-            context_window: 336_579, auto_compact_token_limit: 285_000,
+            context_window: 272_000, auto_compact_token_limit: 244_800,
           });
         }
       }
@@ -228,14 +227,14 @@ describe("native /models augmentation", () => {
       effectiveContextWindowPercent: model.effective_context_window_percent,
       autoCompactTokenLimit: model.auto_compact_token_limit,
     }))).toEqual([
-      { contextWindow: 41_000, effectiveContextWindowPercent: 78, autoCompactTokenLimit: 32_000 },
-      { contextWindow: 90_000, effectiveContextWindowPercent: 89, autoCompactTokenLimit: 80_000 },
-      { contextWindow: 41_000, effectiveContextWindowPercent: 78, autoCompactTokenLimit: 32_000 },
-      { contextWindow: 90_000, effectiveContextWindowPercent: 89, autoCompactTokenLimit: 80_000 },
-      { contextWindow: 41_000, effectiveContextWindowPercent: 78, autoCompactTokenLimit: 32_000 },
-      { contextWindow: 90_000, effectiveContextWindowPercent: 89, autoCompactTokenLimit: 80_000 },
-      { contextWindow: 90_000, effectiveContextWindowPercent: 89, autoCompactTokenLimit: 80_000 },
-      { contextWindow: 90_000, effectiveContextWindowPercent: 89, autoCompactTokenLimit: 80_000 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
+      { contextWindow: 272_000, effectiveContextWindowPercent: 90, autoCompactTokenLimit: 244_800 },
     ]);
   });
 
@@ -314,7 +313,7 @@ describe("native /models augmentation", () => {
     expect(models[1]!.auto_compact_token_limit).toBe(270_000);
     for (const [index, model] of models.slice(3).entries()) {
       const route = availableChatGptWebModelRoutes(config, true)[index]!;
-      const limits = resolveChatGptWebContextLimits(
+      const limits = resolveChatGptWebModelContextLimits(
         route.backendModel,
         route.adapterEffort,
         config,

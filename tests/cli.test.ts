@@ -163,7 +163,7 @@ test("manual setup rejects capability refresh and Bigger Context", async () => {
       "--acknowledge-unofficial",
     ], env);
     expect(bigger.exitCode).toBe(1);
-    expect(bigger.stderr).toContain("does not support Bigger Context");
+    expect(bigger.stderr).toContain("--bigger-context has been removed");
 
     const browserOnly = await runCli([
       "setup",

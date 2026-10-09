@@ -188,7 +188,7 @@ for (const development of [false, true]) for (const interaction of ["manual", "a
 }
 
 for (const development of [false, true]) {
-  test(`${development ? "DEV" : "production"} allows Luna Bigger Context and preserves it across account refresh`, async () => {
+  test(`${development ? "DEV" : "production"} retires the old multipart preference across account refresh`, async () => {
     const root = mkdtempSync(join(tmpdir(), "codex-web-luna-setup-"));
     const configPath = join(root, "config.json");
     const existing = {
@@ -220,20 +220,20 @@ for (const development of [false, true]) {
         browserHostDescriptorPath: join(root, "launcher-browser.json"), acknowledgedUnofficial: true };
       const configure = development ? setupDevProfile : setup;
       await configure(options);
-      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: true });
+      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: false });
       await configure({ ...options, experimentalBiggerContext: true });
-      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: true });
-      // Refreshing a previously paid account preserves the explicitly enabled feature on Free.
+      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: false });
+      // Refreshing capabilities must not reactivate a retired preference.
       existing.solAvailable = true;
       await configure({ ...options, refreshAccountCapabilities: true });
-      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: true });
+      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: false });
       existing.solAvailable = false;
       await configure({ ...options, experimentalBiggerContext: false });
       expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: false, experimentalBiggerContext: false });
       expect(existing.experimentalBiggerContext).toBeTrue();
       scannedSolAvailable = true;
       await configure({ ...options, refreshAccountCapabilities: true, experimentalBiggerContext: true });
-      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: true, experimentalBiggerContext: true });
+      expect(save.mock.calls.at(-1)?.[0]).toMatchObject({ solAvailable: true, experimentalBiggerContext: false });
     } finally {
       for (const mock of mocks.reverse()) mock.mockRestore();
       rmSync(root, { recursive: true, force: true });

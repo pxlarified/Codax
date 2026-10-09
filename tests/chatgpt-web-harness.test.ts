@@ -1,3 +1,4 @@
+import { chatGptBrowserInputLimitError } from "../src/adapters/chatgpt-web/adapter-error";
 import { afterAll, describe, expect, spyOn, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -370,7 +371,7 @@ describe("ChatGPT outer-native harness v4", () => {
 
   test.each([
     [false, false], [true, false], [false, true], [true, true],
-  ])("sequential native messages honor fresh conversation=%s and Luna Bigger Context=%s", async (freshConversation, luna) => {
+  ])("sequential native messages rebuild history after final completion (fresh=%s, Luna=%s)", async (freshConversation, luna) => {
     const socketPath = brokerTestEndpoint(`cgw-retained-messages-${process.pid}-${Date.now()}`);
     const provider: CodexProviderConfig = {
       adapter: "chatgpt-web",
@@ -397,8 +398,8 @@ describe("ChatGPT outer-native harness v4", () => {
         expect(turn.prepareResume).toBeUndefined();
         expect(turn.retainConversation).not.toBe(true);
       }
-      expect(turn.captureLunaCheckpoint).toBeUndefined();
-      const prepared = browserMessages === 0 || freshConversation ? await turn.prepare() : await turn.prepareResume!();
+      expect(turn.captureLunaCheckpoint).toBe(luna ? true : undefined);
+      const prepared = await turn.prepare();
       preparedPrompts.push(prepared.text);
       conversationKeys.push(turn.conversationKey!);
       const token = prepared.text.match(/turn_token (turn_[A-Za-z0-9_-]+)/)?.[1];
@@ -453,18 +454,14 @@ describe("ChatGPT outer-native harness v4", () => {
       await adapter.runTurn!(second, { headers: new Headers() }, () => {});
 
       expect(browserMessages).toBe(2);
-      expect(conversationKeys[0]).toBe(freshConversation
+      expect(conversationKeys[0]).toBe(freshConversation || luna
         ? undefined : chatGptConversationKey(first, chatGptWebExecutionNamespace(provider))!);
       expect(conversationKeys[1]).toBe(conversationKeys[0]);
       expect(tokens[1]).not.toBe(tokens[0]);
       expect(preparedPrompts[0]).toContain("Inspect the project");
       expect(preparedPrompts[1]).toContain("Continue in the same repository");
-      if (freshConversation) {
-        expect(preparedPrompts[1]).toContain("First retained answer");
-        expect(preparedPrompts[1]).toContain("Inspect the project");
-      } else {
-        expect(preparedPrompts[1]).not.toContain("First retained answer");
-      }
+      expect(preparedPrompts[1]).toContain("First retained answer");
+      expect(preparedPrompts[1]).toContain("Inspect the project");
       expect(preparedPrompts[1]).not.toContain(environmentXml);
     } finally {
       (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = originalRun;
@@ -767,7 +764,6 @@ describe("ChatGPT outer-native harness v4", () => {
 
     expect(() => extractChatGptTurnEnvironment(request)).toThrow("missing cwd");
   });
-
 
   test("uses stable native turn metadata for every provider round in one Codex turn", () => {
     const first = rawWireRequest(environmentXml);
@@ -1345,45 +1341,6 @@ describe("ChatGPT outer-native harness v4", () => {
         }
       }
       expect(browserStarts).toBe(MAX_CHATGPT_WEB_TURN_RETRIES + 1);
-    } finally {
-      (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = originalRun;
-      await TurnBroker.forSocket(socketPath).close();
-    }
-  });
-
-  test("prompt preparation preserves its error instead of exposing a revoked MCP token", async () => {
-    const socketPath = brokerTestEndpoint(`cgw-prepare-error-${process.pid}-${Date.now()}`);
-    const provider: CodexProviderConfig = {
-      adapter: "chatgpt-web",
-      baseUrl: `browser://prepare-error-${Date.now()}`,
-      chatgptWeb: {
-        brokerSocketPath: socketPath,
-        localToolsEnabled: true,
-        experimentalBiggerContext: true,
-        solAvailable: false,
-        threadEnvironmentStatePath: join(tempRoot, "prepare-error-environment.json"),
-        lunaCheckpointStatePath: join(tempRoot, "prepare-error-checkpoint.json"),
-      },
-    };
-    const worker = ChatGptBrowserWorker.forProvider(provider);
-    const originalRun = worker.run.bind(worker);
-    (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = async turn => {
-      await turn.prepare();
-      throw new Error("Oversized final contract unexpectedly succeeded");
-    };
-    try {
-      const request = rawWireRequest(environmentXml);
-      request.modelId = "gpt-5.6-luna";
-      request.options.reasoning = "low";
-      request.options.outputFormat = { type: "json_schema", name: "oversized", strict: true,
-        schema: { type: "string", description: "word ".repeat(25_000) } };
-      const events: AdapterEvent[] = [];
-      await createChatGptWebAdapter(provider).runTurn!(
-        request, { headers: new Headers() }, event => events.push(event),
-      );
-      expect(events.at(-1)).toMatchObject({ type: "error", code: "context_length_exceeded", retryable: false });
-      expect((events.at(-1) as { message: string }).message).toContain("exceed the available message budget");
-      expect(events.some(event => event.type === "tool_call_start")).toBeFalse();
     } finally {
       (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = originalRun;
       await TurnBroker.forSocket(socketPath).close();
@@ -4242,4 +4199,89 @@ describe("adapter liveness covers every path through a turn", () => {
     // Verify continued liveness, not millisecond-exact OS timer scheduling.
     expect(heartbeats.at(-1)).toBeGreaterThan(heartbeats[0]!);
   }, 40_000);
+});
+
+  test("browser input overflow requests one native mid-turn compaction without shrinking the model window", async () => {
+    const provider: CodexProviderConfig = {
+      adapter: "chatgpt-web",
+      baseUrl: `browser://chatgpt-input-compaction-${Date.now()}`,
+      chatgptWeb: { localToolsEnabled: false, solAvailable: true, proAvailable: false },
+    };
+    const worker = ChatGptBrowserWorker.forProvider(provider);
+    const originalRun = worker.run.bind(worker);
+    let browserStarts = 0;
+    (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = async () => {
+      browserStarts += 1;
+      throw chatGptBrowserInputLimitError("compiled browser message exceeds the Plus input boundary");
+    };
+    const request = rawWireRequest(environmentXml);
+    const executionKey = `${chatGptWebExecutionNamespace(provider)}:${chatGptTurnExecutionKey(request)}`;
+    try {
+      const firstEvents: AdapterEvent[] = [];
+      await createChatGptWebAdapter(provider).runTurn!(
+        request,
+        { headers: new Headers() },
+        event => firstEvents.push(event),
+      );
+      expect(firstEvents.at(-1)).toEqual({
+        type: "done",
+        stopReason: "stop",
+        endTurn: false,
+        usage: {
+          inputTokens: 244_800,
+          outputTokens: 0,
+          totalTokens: 244_800,
+          estimated: true,
+        },
+      });
+      expect(firstEvents.some(event => event.type === "error")).toBeFalse();
+
+      // Native Codex compaction retires the source response before retrying the same user turn.
+      expect(await chatGptTurnSessions.retireAndWait(executionKey)).toBeTrue();
+
+      const retryEvents: AdapterEvent[] = [];
+      await createChatGptWebAdapter(provider).runTurn!(
+        request,
+        { headers: new Headers() },
+        event => retryEvents.push(event),
+      );
+      expect(retryEvents.at(-1)).toMatchObject({
+        type: "error",
+        code: "context_length_exceeded",
+        retryable: false,
+      });
+      expect((retryEvents.at(-1) as Extract<AdapterEvent, { type: "error" }>).message)
+        .toContain("after automatic compaction");
+      expect(browserStarts).toBe(2);
+    } finally {
+      (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = originalRun;
+      await chatGptTurnSessions.retireAndWait(executionKey);
+    }
+  });
+
+test("Luna overflow remains terminal after its rolling checkpoint instead of requesting separate compaction", async () => {
+  const provider: CodexProviderConfig = {
+    adapter: "chatgpt-web",
+    baseUrl: `browser://luna-input-boundary-${Date.now()}`,
+    chatgptWeb: { localToolsEnabled: false, solAvailable: false, proAvailable: false },
+  };
+  const worker = ChatGptBrowserWorker.forProvider(provider);
+  const originalRun = worker.run.bind(worker);
+  (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = async () => {
+    throw chatGptBrowserInputLimitError("the current Luna message is too large");
+  };
+  const request = rawWireRequest(environmentXml);
+  request.modelId = "gpt-5.6-luna";
+  request.options.reasoning = "low";
+  const executionKey = `${chatGptWebExecutionNamespace(provider)}:${chatGptTurnExecutionKey(request)}`;
+  try {
+    const events: AdapterEvent[] = [];
+    await createChatGptWebAdapter(provider).runTurn!(request, { headers: new Headers() }, event => events.push(event));
+    expect(events.at(-1)).toMatchObject({ type: "error", code: "context_length_exceeded", retryable: false });
+    expect(events.some(event => event.type === "done" && !event.endTurn)).toBeFalse();
+    expect((events.at(-1) as Extract<AdapterEvent, { type: "error" }>).message).toContain("rolling checkpoint");
+  } finally {
+    (worker as unknown as { run: (turn: BrowserTurn) => Promise<string> }).run = originalRun;
+    await chatGptTurnSessions.retireAndWait(executionKey);
+  }
 });

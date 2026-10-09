@@ -1,3 +1,4 @@
+import { CHATGPT_WEB_SOL_MODEL_AUTO_COMPACT_TOKEN_LIMIT } from "../../chatgpt-web-models";
 import { createHash, randomBytes } from "node:crypto";
 import { resolve } from "node:path";
 import { isChatGptWebZeroRiskBackendModel } from "../../chatgpt-web-models";
@@ -20,16 +21,16 @@ import {
 import { namespacedToolName, type AdapterEvent, type CodexContentPart, type CodexParsedRequest, type CodexProviderConfig, type CodexToolResultMessage, type CodexUsage } from "../../types";
 import type { ProviderAdapter } from "../base";
 import { parseDataUrl } from "../image";
-import { ChatGptWebAdapterError, chatGptToolTimeoutError } from "./adapter-error";
+import { ChatGptWebAdapterError, chatGptToolTimeoutError, isChatGptBrowserInputLimitError } from "./adapter-error";
 import { ChatGptBrowserWorker } from "./browser-worker";
 import { extractChatGptTurnEnvironment, extractChatGptTurnIdentity, priorChatGptAbortedTurnIds } from "./environment";
 import { CHATGPT_WEB_LUNA_MODEL_ID, resolveChatGptWebModelMode, type ChatGptWebCapabilities } from "./model";
 import { chatGptReadOnlyContextWarning, compileChatGptWebPrompt } from "./prompt";
 import { createChatGptStructuredOutputValidator } from "./output-validation";
-import { chatGptWebTurnRetryPolicy } from "./retry-policy";
+import { chatGptWebInputCompactionPolicy, chatGptWebTurnRetryPolicy } from "./retry-policy";
 import { TurnBroker, type BrokerToolRequest, type BrokerToolResult, type TurnBrokerOwner } from "./turn-broker";
 import { ChatGptTextFeed, ChatGptTraceFeed, chatGptCompactionSourceExecutionKey, chatGptInstructionLineage, chatGptThreadOwnershipKey, chatGptTurnExecutionKey, chatGptTurnRetryKey, chatGptTurnRoundKey, chatGptTurnSessions, type ChatGptBrowserOutcome, type ChatGptTraceEvent, type ChatGptTurnRuntime, type ChatGptTurnSession } from "./turn-execution";
-import { estimateChatGptWebUsage, resolveBiggerContextMultipartParts } from "./usage";
+import { estimateChatGptWebUsage } from "./usage";
 import { ChatGptThreadEnvironmentStore } from "./thread-environment";
 import {
   ChatGptLunaCheckpointStore,
@@ -267,6 +268,18 @@ function emitToolBatch(requests: BrokerToolRequest[], usage: CodexUsage, emit: (
   emit({ type: "done", stopReason: "tool_use", endTurn: false, usage });
 }
 
+async function closeCompletedBrowserConversation(session: ChatGptTurnSession, executionKey: string): Promise<void> {
+  const conversationKey = session.conversationKey();
+  if (!conversationKey) return;
+  try {
+    // Preserve the final response journal for reconnects while releasing its browser document.
+    await chatGptTurnSessions.retireConversationPreservingFinalResponse(conversationKey, session, executionKey);
+  } catch (error) {
+    // An accepted answer remains authoritative if the launcher loses its cleanup acknowledgement.
+    console.warn(`[chatgpt-web] completed turn cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function emitBrowserCompletion(outcome: ChatGptBrowserOutcome, usage: CodexUsage, emit: (event: AdapterEvent) => void): void {
   if (outcome.type === "error") throw outcome.error;
   emit({ type: "done", stopReason: "stop", endTurn: true, usage });
@@ -364,10 +377,7 @@ export function createChatGptWebAdapter(
   if (experimentalSkillAttachments && provider.chatgptWeb?.browserInteractionMode === "manual") {
     throw new Error("Skills as files is unavailable in Zero Risk mode");
   }
-  const experimentalBiggerContext = provider.chatgptWeb?.experimentalBiggerContext;
-  if (experimentalBiggerContext !== undefined && typeof experimentalBiggerContext !== "boolean") {
-    throw new Error("ChatGPT Bigger Context preference must be a boolean");
-  }
+  const experimentalBiggerContext = false;
   const configuredCapabilities: ChatGptWebCapabilities = {
     localToolsEnabled: provider.chatgptWeb?.localToolsEnabled === true,
     solAvailable: provider.chatgptWeb?.solAvailable !== false,
@@ -456,16 +466,7 @@ export function createChatGptWebAdapter(
       : undefined;
     const compileOptionsFor = (input: CodexParsedRequest) => {
       if (manualRequest) return {};
-      const experimentalMultipartParts = experimentalBiggerContext
-        ? resolveBiggerContextMultipartParts(input, turnCapabilities, experimentalSkillAttachments)
-        : undefined;
-      return {
-        captureLunaCheckpoint,
-        experimentalSkillAttachments,
-        ...(experimentalMultipartParts !== undefined
-          ? { experimentalMultipartParts }
-          : {}),
-      };
+      return { captureLunaCheckpoint, experimentalSkillAttachments };
     };
     if (captureLunaCheckpoint) {
       console.info(
@@ -1246,6 +1247,7 @@ export function createChatGptWebAdapter(
             const settled = session.settledOutcome();
             if (settled) {
               if (settled.type === "error") throw settled.error;
+              await closeCompletedBrowserConversation(session, executionKey);
               const trace = session.runtime.trace.drain();
               const completedTextDeltas = session.runtime.text.drain();
               const finalReplay = replay.length === 0
@@ -1276,6 +1278,7 @@ export function createChatGptWebAdapter(
               const reasoning = session.roundReasoning(roundKey);
               session.setFinalReasoning(reasoning);
               session.setFinalEvents(session.roundEvents(roundKey));
+              chatGptWebInputCompactionPolicy.clear(retryKey);
               emitRoundBatch(buffer => emitBrowserCompletion(
                 settled,
                 estimateChatGptWebUsage(currentUsageInput(parsed), { answer: settled.answer, reasoning }, turnCapabilities, experimentalBiggerContext, experimentalSkillAttachments),
@@ -1375,6 +1378,7 @@ export function createChatGptWebAdapter(
                 session.setFinalEvents(session.roundEvents(roundKey));
                 if (turnToken) await broker.revoke(turnToken);
                 if (completedOutcome.type === "error") throw completedOutcome.error;
+                await closeCompletedBrowserConversation(session, executionKey);
                 if (session.runtime.text.value() !== completedOutcome.answer) {
                   throw new Error("ChatGPT browser Markdown stream did not reproduce the completed answer");
                 }
@@ -1382,6 +1386,7 @@ export function createChatGptWebAdapter(
                 if (bufferStructuredOutput) {
                   emitRoundBatch(buffer => emitTextDeltas([completedOutcome.answer], buffer));
                 }
+                chatGptWebInputCompactionPolicy.clear(retryKey);
                 emitRoundBatch(buffer => emitBrowserCompletion(
                   completedOutcome,
                   estimateChatGptWebUsage(currentUsageInput(parsed), { answer: completedOutcome.answer, reasoning: roundReasoning }, turnCapabilities, experimentalBiggerContext, experimentalSkillAttachments),
@@ -1472,7 +1477,31 @@ export function createChatGptWebAdapter(
           // Validation and result-delivery failures never enter this branch.
           const settled = awaitingRuntime ? session.settledOutcome() : undefined;
           if (settled?.type === "error") error = settled.error;
-          const turnError = submittedTurnFailure(session, error);
+          let turnError = submittedTurnFailure(session, error);
+          if (isChatGptBrowserInputLimitError(turnError)) {
+            if (!parsed._compactionRequest && parsed.modelId !== CHATGPT_WEB_LUNA_MODEL_ID
+              && chatGptWebInputCompactionPolicy.request(retryKey)) {
+              chatGptWebTurnRetryPolicy.clear(retryKey);
+              session.cancel();
+              emitRoundEvent({
+                type: "done", stopReason: "stop", endTurn: false,
+                usage: {
+                  inputTokens: CHATGPT_WEB_SOL_MODEL_AUTO_COMPACT_TOKEN_LIMIT,
+                  outputTokens: 0, totalTokens: CHATGPT_WEB_SOL_MODEL_AUTO_COMPACT_TOKEN_LIMIT, estimated: true,
+                },
+              });
+              session.completeRound(roundKey);
+              return;
+            }
+            turnError = new ChatGptWebAdapterError(
+              parsed._compactionRequest
+                ? "The compaction request cannot fit in one browser message."
+                : parsed.modelId === CHATGPT_WEB_LUNA_MODEL_ID
+                  ? "Luna already uses a rolling checkpoint. The current message exceeds its browser input boundary."
+                  : "The full browser message still does not fit after automatic compaction.",
+              { status: 400, errorType: "invalid_request_error", code: "context_length_exceeded", retryable: false },
+            );
+          }
           const handledError = turnError instanceof ChatGptWebAdapterError && turnError.retryable
             ? chatGptWebTurnRetryPolicy.recordRetryableFailure(retryKey, turnError)
             : turnError;

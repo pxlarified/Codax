@@ -4,11 +4,11 @@
 Codex app / CLI
       │ Responses API on loopback
       ▼
-launcher-owned codex-chatgpt-web daemon
+launcher-owned codax daemon
   ├─ official /models passthrough + fixed ChatGPT Web models
   ├─ native Responses passthrough or ChatGPT Responses/SSE bridge
   ├─ authenticated native Search and Image Gen request forwarding
-  ├─ ChatGPT browser worker (up to five task-bound Electron tabs)
+  ├─ ChatGPT browser worker (independent task-bound Electron tabs)
   ├─ capability broker (full mode only)
   └─ stdio MCP server
             ▲
@@ -78,7 +78,7 @@ launcher from starting a Responses daemon for its config. DEV setup stores brows
 and tunnel credentials but performs no Codex integration, system service installation, or port
 probe. The DEV launcher supervisor owns only the isolated MCP tunnel. Browser diagnostics, broker
 state, thread authority, checkpoints, and named chat state live
-under `~/.codex-chatgpt-web-dev` by default.
+under `~/.codax-dev` by default.
 
 The direct turn-token contract defaults to `Codex Native2`; the retired `Codex Native` identity is
 never selected or refreshed in place. Setup migrates known legacy local configuration to the new name, clears prior verification state, and
@@ -97,16 +97,14 @@ label does not itself replace a remote connector's cached schema; legacy connect
 
 ## Browser lifecycle
 
-The desktop launcher owns one persistent Electron partition and up to five task-bound browser
-tabs. Each task/model/effort/compaction epoch owns one exact `WebContentsView` lease; sequential
-native messages reuse that surface, while each message receives a fresh turn-bound MCP token and
-keeps all of its MCP tool rounds inside one ChatGPT response. Compaction asks the same retained Web
-agent for a one-shot structured checkpoint, waits for the response and physical helper cleanup,
-then closes the old surface. The next epoch gets a new browser chat. Model messages never copy
-state between tabs. Tabs share only the local login
-partition and keep independent documents and lifecycles. Closing a running tab destroys its page
-and terminates that browser turn. A sixth concurrent turn fails explicitly; the cap avoids excessive
-parallel traffic that could trigger account abuse controls.
+The desktop launcher owns one persistent Electron partition and independent task-bound browser
+tabs. Each active task owns one exact `WebContentsView` lease and keeps its MCP tool rounds inside
+one ChatGPT response. Compaction asks an available source agent for a one-shot checkpoint and
+waits for physical helper cleanup before continuing in a new browser chat. Successful and failed
+terminal tasks release their tabs. A later user message rebuilds canonical Codex history in a new
+document. Completed response journals remain available for exact request replay.
+Tabs share the local login partition but keep independent documents and lifecycles. Closing a
+running tab cancels its task. There is no fixed active-task limit.
 
 Browser submission and response binding use ChatGPT's logical `data-turn-id`, not the
 `conversation-turn-N` display index, which can change during rendering. The submission baseline
@@ -148,7 +146,7 @@ inline-size boundary: usage accounting asks Codex to compact before that boundar
 that still exceeds the proven hard ceiling fails explicitly before any browser turn opens.
 Top-level `model_context_window` raises only the proxied native rows' advertised maximum, allowing
 Codex to apply its own configured context override without clamping. Routed ChatGPT Web models
-retain their measured adapter-owned limits.
+retain their adapter-owned model capacities.
 
 **Save chats in ChatGPT** (`setup --saved-chats`; `--temporary-chats` restores the default)
 uses ordinary saved conversations for task turns in Automatic and Zero Risk modes. This is
@@ -166,18 +164,17 @@ uses a fresh read-only summarization chat with the same bounded lifecycle. This 
 connector access on retained follow-ups, at the cost of resending more context. The preference is
 preserved but inactive in Zero Risk mode.
 
-Bigger Context partitions complete ordered records against each message's available token and
-composer budgets. Inert stages carry text; the final message also carries all retained attachments,
-the execution contract and any output schema. Their reserves are deducted before partitioning,
-then preflight checks the actual compiled messages and total transaction. The selected execution
-effort and attachment references remain unchanged. Large transactions use up to six messages;
-the advertised context and compaction thresholds remain three times the base limits. More parts
-reduce message size, not the amount of history retained.
+Codax sends each prompt in one browser message. Sol model rows report 272,000 tokens with a
+244,800-token safety ceiling, independent of effort. Browser preflight checks the selected
+account's measured token and composer boundaries. Overflow, including an authoritative server
+size rejection, returns a successful empty follow-up at the native compaction threshold. A guard
+permits one automatic compaction attempt per logical Codex turn; another overflow fails explicitly.
+The retired multipart preference cannot enable split submissions.
 
 In Full mode, routed compaction v1/v2 uses the exact retained source agent and a one-shot MCP control
 capability that accepts only the bound checkpoint; it cannot claim or invoke the ordinary Codex tool
 environment. Zero Risk always advertises a fixed three-times compaction interval without enabling
-Bigger Context multipart transport. At that boundary its active ChatGPT response receives the
+multipart transport. At that boundary its active ChatGPT response receives the
 checkpoint instruction as an MCP result, returns the compacted context through its bound completion
 control, and ends. The old manual chat is retired; the next compacted Codex request owns a fresh
 browser chat and its locally compiled prompt is copied to the clipboard. A missing Automatic
@@ -196,7 +193,7 @@ The launcher Limits page is an opt-in estimate of its own accepted browser submi
 reads the current personal ChatGPT account and the Billing panel's Pro tier; a model-picker Pro
 badge alone cannot distinguish Pro $100 from Pro $200. The private store keeps account hashes,
 submission receipt IDs, timestamps, and model families, never prompts or authentication tokens.
-Every physical Send is counted once after semantic acceptance, including Bigger Context stages;
+Every physical Send is counted once after semantic acceptance, including compaction submissions;
 native tool rounds and stream reconnects do not create receipts. The selected slider's accessibility
 announcement identifies GPT-6 Pro versus GPT-5.6 Pro. Unidentified Pro sends are visibly uncertain.
 
@@ -282,7 +279,7 @@ launcher error.
 - Store browser state and tunnel credentials under the application home with mode `0600`.
 - Protect lifecycle control endpoints with a random application-owned bearer token.
 - Never place secret values in command-line arguments, logs, generated profiles, or Git.
-- Limit browser turns to five independent task-bound tabs and reject unsupported models explicitly.
+- Use independent task-bound browser tabs and reject unsupported models explicitly.
   The selected routed model fixes the adapter effort; a conflicting request effort cannot change it.
 - Do not retry or switch modes to evade product usage limits.
 

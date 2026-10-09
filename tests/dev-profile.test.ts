@@ -33,7 +33,7 @@ test("DEV profile paths isolate browser, Codex, config, chat, and runtime state"
 });
 
 test("the retired Bigger Context preference is ignored in the isolated DEV runtime config", () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-web-gpt-dev-features-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-dev-features-"));
   try {
     const paths = resolveDevProfilePaths({
       homeDirectory: root,
@@ -73,53 +73,53 @@ test("installed launcher discovery has explicit platform candidates", () => {
     homeDirectory: "/Users/tester",
     environment: {},
   })).toEqual([
-    "/Applications/Codex Web GPT.app/Contents/MacOS/Codex Web GPT",
-    "/Users/tester/Applications/Codex Web GPT.app/Contents/MacOS/Codex Web GPT",
+    "/Applications/Codax.app/Contents/MacOS/Codax",
+    "/Users/tester/Applications/Codax.app/Contents/MacOS/Codax",
   ]);
   expect(installedLauncherCandidates({
     platform: "linux",
     homeDirectory: "/home/tester",
     environment: { PATH: "/usr/local/bin:/usr/bin" },
   })).toEqual([
-    "/home/tester/.local/bin/codex-web-gpt",
-    "/usr/local/bin/codex-web-gpt",
-    "/usr/bin/codex-web-gpt",
+    "/home/tester/.local/bin/codax",
+    "/usr/local/bin/codax",
+    "/usr/bin/codax",
   ]);
   expect(installedLauncherCandidates({
     platform: "win32",
     homeDirectory: "C:\\Users\\tester",
     environment: { LOCALAPPDATA: "C:\\Users\\tester\\AppData\\Local" },
   })).toEqual([
-    "C:\\Users\\tester\\AppData\\Local\\Programs\\Codex Web GPT\\Codex Web GPT.exe",
+    "C:\\Users\\tester\\AppData\\Local\\Programs\\Codax\\Codax.exe",
   ]);
   expect(installedLauncherCandidates({
     platform: "win32",
     homeDirectory: "C:\\Users\\tester",
     environment: { LOCALAPPDATA: "C:\\Users\\tester\\AppData\\Local" },
-    windowsInstallLocation: "D:\\Apps\\Codex Web GPT",
+    windowsInstallLocation: "D:\\Apps\\Codax",
   })).toEqual([
-    "D:\\Apps\\Codex Web GPT\\Codex Web GPT.exe",
+    "D:\\Apps\\Codax\\Codax.exe",
   ]);
 });
 
 test("injected Windows discovery avoids the live registry while ordinary discovery still uses it", () => {
   const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
   const registry = spyOn(childProcess, "execFileSync").mockImplementation((() =>
-    "    InstallLocation    REG_SZ    D:\\Installed\\Codex Web GPT\n"
+    "    InstallLocation    REG_SZ    D:\\Installed\\Codax\n"
   ) as unknown as typeof childProcess.execFileSync);
   Object.defineProperty(process, "platform", { ...platform, value: "win32" });
   try {
     expect(installedLauncherCandidates({
       platform: "win32",
       environment: { LOCALAPPDATA: "C:\\Fixture\\AppData\\Local" },
-    })).toEqual(["C:\\Fixture\\AppData\\Local\\Programs\\Codex Web GPT\\Codex Web GPT.exe"]);
+    })).toEqual(["C:\\Fixture\\AppData\\Local\\Programs\\Codax\\Codax.exe"]);
     expect(registry).not.toHaveBeenCalled();
     expect(installedLauncherCandidates({ platform: "win32", environment: process.env }))
-      .toEqual(["D:\\Installed\\Codex Web GPT\\Codex Web GPT.exe"]);
+      .toEqual(["D:\\Installed\\Codax\\Codax.exe"]);
     expect(registry).toHaveBeenCalledTimes(1);
     expect(installedLauncherCandidates({
       platform: "win32", environment: {}, windowsInstallLocation: "E:\\Explicit",
-    })).toEqual(["E:\\Explicit\\Codex Web GPT.exe"]);
+    })).toEqual(["E:\\Explicit\\Codax.exe"]);
     expect(registry).toHaveBeenCalledTimes(1);
   } finally {
     Object.defineProperty(process, "platform", platform);

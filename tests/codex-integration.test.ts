@@ -45,7 +45,7 @@ function compatibilityV1Config(mode: "browser-only" | "full") {
 }
 
 function fixture(): { root: string; codexHome: string; appHome: string } {
-  const root = join(tmpdir(), `codex-chatgpt-web-integration-${process.pid}-${Date.now()}-${Math.random()}`);
+  const root = join(tmpdir(), `codax-integration-${process.pid}-${Date.now()}-${Math.random()}`);
   const codexHome = join(root, "codex");
   const appHome = join(root, "app");
   mkdirSync(codexHome, { recursive: true });
@@ -169,7 +169,7 @@ describe("reversible native Codex route integration", () => {
     expect(installed).toContain("goals = true");
     expect(installed).not.toMatch(/^\s*model_provider\s*=/m);
     expect(installed).not.toMatch(/^\s*model_catalog_json\s*=/m);
-    expect(installed).not.toContain("[model_providers.codex-chatgpt-web]");
+    expect(installed).not.toContain("[model_providers.codax]");
     expect(readFileSync(getCodexJournalRecoveryPath(), "utf8"))
       .toBe(readFileSync(getCodexJournalPath(), "utf8"));
 
@@ -230,15 +230,15 @@ describe("reversible native Codex route integration", () => {
       previousMultiAgent: { rawLine: "multi_agent = false # user choice", value: "false" },
       previousMultiAgentV2: { rawLine: "multi_agent_v2 = true # user choice", value: "true" },
     });
-    expect(installed).toContain("multi_agent = true # Managed by codex-chatgpt-web");
-    expect(installed).toContain("multi_agent_v2 = false # Managed by codex-chatgpt-web");
+    expect(installed).toContain("multi_agent = true # Managed by codax");
+    expect(installed).toContain("multi_agent_v2 = false # Managed by codax");
     expect(installed).toContain(managedAgentMaxDepthLine(2));
     expect(installed).toContain("goals = true");
 
     expect(deactivateCodexIntegration()).toEqual({ changed: true, active: false });
     expect(readFileSync(configPath, "utf8")).toBe(original);
     expect(activateCodexIntegration()).toEqual({ changed: true, active: true });
-    expect(readFileSync(configPath, "utf8")).toContain("multi_agent_v2 = false # Managed by codex-chatgpt-web");
+    expect(readFileSync(configPath, "utf8")).toContain("multi_agent_v2 = false # Managed by codax");
 
     uninstallCodexIntegration();
     expect(readFileSync(configPath, "utf8")).toBe(original);
@@ -265,7 +265,7 @@ describe("reversible native Codex route integration", () => {
 
     installCodexIntegration(compatibilityV1Config("full"));
     const installed = readFileSync(configPath, "utf8");
-    expect(installed).toContain("enabled = false # Managed by codex-chatgpt-web");
+    expect(installed).toContain("enabled = false # Managed by codax");
     expect(installed).toContain("hide_spawn_agent_metadata = true");
     expect(installed).not.toMatch(/^multi_agent_v2\s*=/m);
     expect(installed).toContain(managedAgentMaxDepthLine(4));

@@ -83,12 +83,12 @@ test("turns observed inline file path formats into Markdown links", () => {
       target: "output/path-format-probe/beta-report.json",
     },
     {
-      path: "/Users/example/codex-chatgpt-web/src/path-format-probe/gamma-helper.ts",
-      target: "/Users/example/codex-chatgpt-web/src/path-format-probe/gamma-helper.ts",
+      path: "/Users/example/codax/src/path-format-probe/gamma-helper.ts",
+      target: "/Users/example/codax/src/path-format-probe/gamma-helper.ts",
     },
     {
-      path: "/Users/example/codex-chatgpt-web/output/path-format-probe/epsilon-report.pdf",
-      target: "/Users/example/codex-chatgpt-web/output/path-format-probe/epsilon-report.pdf",
+      path: "/Users/example/codax/output/path-format-probe/epsilon-report.pdf",
+      target: "/Users/example/codax/output/path-format-probe/epsilon-report.pdf",
     },
     {
       path: String.raw`C:\Users\Dev\Documents\Codex\path-format-probe\zeta-result.pdf`,

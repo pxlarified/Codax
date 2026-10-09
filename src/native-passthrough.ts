@@ -261,7 +261,7 @@ export async function forwardNativeCodexRequest(
   });
   const upstream = await fetchUpstream(upstreamRequest);
   if (compactionRequest && !upstream.ok) {
-    console.warn(`[codex-chatgpt-web] native_compaction_upstream_failed ${JSON.stringify({
+    console.warn(`[codax] native_compaction_upstream_failed ${JSON.stringify({
       endpoint, model, status: upstream.status,
       requestId: nativeDiagnosticId(upstream.headers.get("x-request-id")),
       cfRay: nativeDiagnosticId(upstream.headers.get("cf-ray")),
@@ -277,7 +277,7 @@ export async function forwardNativeCodexRequest(
     upstream.body
       ? withUncleanCloseTolerance(upstream.body, isEventStream, bytes => {
         console.warn(
-          `[codex-chatgpt-web] native_upstream_unclean_close endpoint=${endpoint} bytes=${bytes}`
+          `[codax] native_upstream_unclean_close endpoint=${endpoint} bytes=${bytes}`
           + " (turn had already completed; closing the client stream normally)",
         );
       })

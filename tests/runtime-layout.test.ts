@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 test("managed runtime commands reject every ephemeral path component", () => {
-  expect(() => assertDurableRuntimeCommand(["/private/tmp/codex-chatgpt-web"])).toThrow("ephemeral path");
+  expect(() => assertDurableRuntimeCommand(["/private/tmp/codax"])).toThrow("ephemeral path");
   expect(() => assertDurableRuntimeCommand([process.execPath, "/tmp/build/app/cli.js"])).toThrow("ephemeral path");
   expect(() => assertDurableRuntimeCommand([process.execPath])).not.toThrow();
 });
@@ -53,7 +53,7 @@ test("Windows Bun shims resolve to the installed Bun executable before service s
 });
 
 test("installed Bun discovery ignores a temporary self-extract executable", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-bun-discovery-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-bun-discovery-${process.pid}-${Date.now()}`);
   const ephemeralBun = join(root, "bun-node-test", "bun.exe");
   roots.push(root);
   mkdirSync(join(root, "bun-node-test"), { recursive: true });
@@ -66,12 +66,12 @@ test("installed Bun discovery ignores a temporary self-extract executable", () =
 });
 
 test("Windows uses a stable native named pipe for the outer Codex tool broker", () => {
-  const first = defaultBrokerEndpoint("C:\\Users\\alice\\.codex-chatgpt-web", "win32");
-  const second = defaultBrokerEndpoint("C:\\Users\\alice\\.codex-chatgpt-web", "win32");
+  const first = defaultBrokerEndpoint("C:\\Users\\alice\\.codax", "win32");
+  const second = defaultBrokerEndpoint("C:\\Users\\alice\\.codax", "win32");
   expect(first).toBe(second);
   expect(isWindowsPipeEndpoint(first)).toBe(true);
   expect(resolveBrokerEndpoint(first)).toBe(first);
-  expect(defaultBrokerEndpoint("/home/alice/.codex-chatgpt-web", "linux")).toEndWith(join("runtime", "turn-broker.sock"));
+  expect(defaultBrokerEndpoint("/home/alice/.codax", "linux")).toEndWith(join("runtime", "turn-broker.sock"));
 });
 
 test("permission-denied process probes preserve ownership evidence", () => {
@@ -119,7 +119,7 @@ test.each([
 });
 
 test("setup repairs a legacy automatic connector name that collides with Zero Risk", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-connector-collision-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-connector-collision-${process.pid}-${Date.now()}`);
   roots.push(root);
   process.env.CODEX_CHATGPT_WEB_HOME = root;
   mkdirSync(root, { recursive: true });
@@ -137,7 +137,7 @@ test("setup repairs a legacy automatic connector name that collides with Zero Ri
 });
 
 test("setup explicitly migrates v1 pro-only config to v3 managed browser-only", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-config-migration-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-config-migration-${process.pid}-${Date.now()}`);
   roots.push(root);
   process.env.CODEX_CHATGPT_WEB_HOME = root;
   mkdirSync(root, { recursive: true });
@@ -171,7 +171,7 @@ test("setup explicitly migrates v1 pro-only config to v3 managed browser-only", 
 });
 
 test("existing v3 configurations deterministically retain automatic browser interaction", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-v3-interaction-migration-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-v3-interaction-migration-${process.pid}-${Date.now()}`);
   roots.push(root);
   process.env.CODEX_CHATGPT_WEB_HOME = root;
   mkdirSync(root, { recursive: true });
@@ -193,7 +193,7 @@ test("existing v3 configurations deterministically retain automatic browser inte
 });
 
 test("Zero Risk fails closed without the Launcher browser host", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-manual-host-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-manual-host-${process.pid}-${Date.now()}`);
   roots.push(root);
   process.env.CODEX_CHATGPT_WEB_HOME = root;
   mkdirSync(root, { recursive: true });
@@ -206,7 +206,7 @@ test("Zero Risk fails closed without the Launcher browser host", () => {
 });
 
 test("legacy temp-path wrapper and vendor are removed only after runtime ownership changes", () => {
-  const root = join(tmpdir(), `codex-chatgpt-web-legacy-runtime-${process.pid}-${Date.now()}`);
+  const root = join(tmpdir(), `codax-legacy-runtime-${process.pid}-${Date.now()}`);
   roots.push(root);
   process.env.CODEX_CHATGPT_WEB_HOME = root;
   const wrapper = join(root, "bin", "serve-with-playwright.sh");
@@ -229,7 +229,7 @@ test("legacy temp-path wrapper and vendor are removed only after runtime ownersh
 test("launcher browser ownership is explicit in provider configuration", () => {
   const config = defaultConfig("browser-only");
   config.browserHost = "launcher";
-  config.browserHostDescriptorPath = "/Users/example/.codex-chatgpt-web/runtime/launcher-browser.json";
+  config.browserHostDescriptorPath = "/Users/example/.codax/runtime/launcher-browser.json";
   config.stallTimeoutSec = 900;
   expect(providerConfig(config).chatgptWeb).toMatchObject({
     browserHost: "launcher",

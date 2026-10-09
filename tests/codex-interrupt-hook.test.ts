@@ -162,20 +162,20 @@ test("trusts the canonical Codex config path before a new config file exists", (
 
 test("Interrupt hook command is absolute, quoted, and bound to the exact application home", () => {
   expect(codexInterruptHookCommand(
-    { runtimeCommand: ["/Applications/Codex Web GPT.app/runtime/bun", "/Applications/Codex Web GPT.app/app/cli.js"] },
-    "/Users/test/Application Support/Codex Web GPT",
+    { runtimeCommand: ["/Applications/Codax.app/runtime/bun", "/Applications/Codax.app/app/cli.js"] },
+    "/Users/test/Application Support/Codax",
     "darwin",
   )).toBe(
-    "'/Applications/Codex Web GPT.app/runtime/bun' '/Applications/Codex Web GPT.app/app/cli.js'"
-      + " '--home' '/Users/test/Application Support/Codex Web GPT' 'hook' 'interrupt'",
+    "'/Applications/Codax.app/runtime/bun' '/Applications/Codax.app/app/cli.js'"
+      + " '--home' '/Users/test/Application Support/Codax' 'hook' 'interrupt'",
   );
   expect(codexInterruptHookCommand(
-    { runtimeCommand: ["C:\\Program Files\\Codex Web GPT\\bun.exe", "C:\\Program Files\\Codex Web GPT\\cli.js"] },
-    "C:\\Users\\test\\Codex Web GPT",
+    { runtimeCommand: ["C:\\Program Files\\Codax\\bun.exe", "C:\\Program Files\\Codax\\cli.js"] },
+    "C:\\Users\\test\\Codax",
     "win32",
   )).toBe(
-    '"C:\\Program Files\\Codex Web GPT\\bun.exe" "C:\\Program Files\\Codex Web GPT\\cli.js"'
-      + ' "--home" "C:\\Users\\test\\Codex Web GPT" "hook" "interrupt"',
+    '"C:\\Program Files\\Codax\\bun.exe" "C:\\Program Files\\Codax\\cli.js"'
+      + ' "--home" "C:\\Users\\test\\Codax" "hook" "interrupt"',
   );
 });
 
@@ -307,7 +307,7 @@ test("preserves ownership when Codex moves trust state before the hook and norma
       runtimeCommand: ["/opt/runtime"],
     });
     const state = `[hooks.state.${JSON.stringify(installed.stateKey)}]${ending}trusted_hash = ${JSON.stringify(installed.trustedHash)}${ending}`;
-    const rewritten = text.replace(state, "").replace("# Managed by codex-chatgpt-web:", state + "# Managed by codex-chatgpt-web:")
+    const rewritten = text.replace(state, "").replace("# Managed by codax:", state + "# Managed by codax:")
       .replace(`timeout = 3${ending}${ending}`, `timeout = 3${ending}`);
     const parse = (value: string) => Bun.TOML.parse(value.replace(/\r\n?/g, "\n"));
     expect(parse(rewritten)).toEqual(parse(text));

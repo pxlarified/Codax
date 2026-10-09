@@ -5,8 +5,8 @@ editing Codex configuration, or opening a new issue.
 
 ## The first five minutes
 
-1. Install the [latest release](https://github.com/miuuyy/codex-chatgpt-web/releases/latest). Quit
-   **Codex Web GPT** before running the installer again; updating preserves its private ChatGPT
+1. Install the [latest release](https://github.com/pxlarified/Codax/releases/latest). Quit
+   **Codax** before running the installer again; updating preserves its private ChatGPT
    profile and launcher configuration.
 2. In **Setup**, confirm that ChatGPT sign-in, the browser smoke test, and **Install into Codex**
    are green. The installation button says **Install models**, or **Reinstall** after setup.
@@ -61,21 +61,21 @@ port reservations based only on the EACCES message.
 
 The launcher deliberately refuses to overwrite a route changed by another tool. Only one program
 can own Codex's `openai_base_url` at a time. Wrappers and routers such as OpenCodex, Headroom,
-OmniRoute, Codex++, CC Switch, or a manually configured provider may replace the Codex Web GPT route
+OmniRoute, Codex++, CC Switch, or a manually configured provider may replace the Codax route
 for the whole installation or only for the process they launch.
 
 Choose one route owner:
 
-- To use Codex Web GPT, disable the other wrapper's provider/proxy mode, click
+- To use Codax, disable the other wrapper's provider/proxy mode, click
   **Setup → Install into Codex → Reinstall**, fully restart Codex, and start Codex directly rather
   than through the wrapper command.
 - A tool may remain enabled only as an MCP integration if it does not replace `openai_base_url`.
 - To switch away cleanly, use **Settings → Remove Codex integration** first. This restores the exact
-  route that existed before Codex Web GPT was installed.
+  route that existed before Codax was installed.
 
 Do not hand-edit the launcher's route journal. It exists so setup and removal can fail closed instead
 of silently destroying another provider's configuration. First-class external-router composition is
-tracked in [#205](https://github.com/miuuyy/codex-chatgpt-web/issues/205), but is not supported today.
+tracked in [#205](https://github.com/pxlarified/Codax/issues/205), but is not supported today.
 
 ## `Codex interrupt lifecycle hook changed after setup`
 
@@ -102,7 +102,7 @@ While the integration is installed, native Codex models also use the local bridg
 running, or use **Settings → Remove Codex integration** before quitting it. Then fully quit Codex,
 including background processes, and reopen it to load the restored route.
 
-CLI users can temporarily restore the previous route with `codex-chatgpt-web route disconnect`.
+CLI users can temporarily restore the previous route with `codax route disconnect`.
 Fully restart Codex after a route change. Starting the launcher reconnects an installed integration.
 
 ## Codex's usage-limit banner disables Send for Web models
@@ -111,7 +111,7 @@ If Codex shows **You're out of Codex and Work usage** and disables Send even wit
 selected, sign out of **Codex** and sign in with another account you own that can send messages.
 A free account with Codex access and no blocking usage banner can be used.
 
-Keep your intended ChatGPT account signed in inside **Codex Web GPT**; these are separate sessions.
+Keep your intended ChatGPT account signed in inside **Codax**; these are separate sessions.
 Changing the Codex login does not reset or increase the launcher's ChatGPT Web account limits.
 
 ## Encrypted content cannot be verified after switching models
@@ -160,9 +160,9 @@ mean that the ChatGPT UI did not expose a structure the bridge can safely prove.
 
 Free and Go accounts normally expose Luna and Think without the paid-account effort selector. A
 missing paid selector on those accounts is not itself a sign-in failure.
-Luna and Think use rolling summaries with **Settings → Bigger Context** off. Experimental Bigger
-Context keeps the temporary conversation and sends large histories in parts. If earlier details
-are lost in long Free-account chats, turn Bigger Context off and restart Codex.
+Luna and Think use rolling summaries. Codax sends each prompt in one message and requests automatic
+compaction when a Sol message no longer fits. The old Bigger Context setting is ignored. A message
+that still cannot fit after compaction fails explicitly.
 
 ## Personalization or connector controls are not found
 
@@ -240,8 +240,8 @@ response, Windows trusts that connection. For an older launcher, fully quit it a
 
 ```powershell
 $env:NODE_USE_SYSTEM_CA = "1"
-$install = (Get-ItemProperty "HKCU:\Software\d1a6026a-6210-588e-9a2b-da3936f94e02").InstallLocation
-Start-Process (Join-Path $install "Codex Web GPT.exe")
+$install = (Get-ItemProperty "HKCU:\Software\e98cb81b-3d30-5efa-a134-0a205415670d").InstallLocation
+Start-Process (Join-Path $install "Codax.exe")
 ```
 
 For a portable copy, use its executable path instead. Retry **Connect harness** once. This enables
@@ -367,13 +367,13 @@ does not provide credentials or additional allowance for native Image Gen.
 
 ## Update, repair, and remove
 
-To update, quit **Codex Web GPT** and run the same installer command from the README. The installer
+To update, quit **Codax** and run the same installer command from the README. The installer
 replaces the application and runtime while preserving the launcher configuration and private
 ChatGPT profile.
 
 On Linux, automatic updates require the installed launcher created by `install-launcher.sh`.
 If Update reports that the stable wrapper is missing, quit the app, run the installer command
-from the README, and reopen Codex Web GPT from the applications menu. This preserves settings and browser data.
+from the README, and reopen Codax from the applications menu. This preserves settings and browser data.
 
 To repair a valid integration, open **Setup → Install into Codex**, click **Reinstall** once,
 and fully restart Codex. Avoid deleting configuration until **Run doctor** and a safe log identify

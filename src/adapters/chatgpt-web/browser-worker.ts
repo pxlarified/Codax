@@ -138,8 +138,8 @@ export const CHATGPT_TOOL_CONFIRMATION_TIMEOUT_MS = 60_000;
 export const MAX_CHATGPT_CONNECTOR_TRIGGER_ATTEMPTS = 3;
 const CHATGPT_CONNECTOR_MENTION_QUERY = "@codex";
 const CHATGPT_CONNECTOR_ACTION_TIMEOUT_MS = 10_000;
-const CHATGPT_SMOKE_TEXT = "Reply with exactly: CODEX WEB GPT READY";
-const CHATGPT_SMOKE_EXPECTED = "CODEX WEB GPT READY";
+const CHATGPT_SMOKE_TEXT = "Reply with exactly: CODAX READY";
+const CHATGPT_SMOKE_EXPECTED = "CODAX READY";
 /**
  * ChatGPT applies composer state asynchronously, and a fast host can reach the next step before the
  * editor has taken the previous one. This is headroom for that, not a readiness check.
@@ -808,7 +808,7 @@ const chatGptExpiredSessionAlert = (page: Page): Locator => page
 export async function throwIfChatGptSessionFailureAlert(page: Page): Promise<void> {
   if (await chatGptExpiredSessionAlert(page).isVisible().catch(() => false)) {
     throw new ChatGptWebAdapterError(
-      "The ChatGPT session has expired. Sign in again in Codex Web GPT.",
+      "The ChatGPT session has expired. Sign in again in Codax.",
       { status: 401, errorType: "authentication_error", code: "chatgpt_session_expired", retryable: false },
     );
   }

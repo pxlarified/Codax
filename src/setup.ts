@@ -231,7 +231,7 @@ export function setupProxyIsReady(
   health: Record<string, unknown>,
   config: Pick<AppConfig, "mode" | "releaseVersion">,
 ): boolean {
-  return health.service === "codex-chatgpt-web"
+  return health.service === "codax"
     && health.status === "ok"
     && health.mode === config.mode
     && health.version === config.releaseVersion
@@ -409,8 +409,8 @@ async function configureTunnel(config: AppConfig, existing: AppConfig | undefine
   }
   const installedBinary = await installTunnelClient();
   const productionProfileName = interactionMode === "manual"
-    ? "codex-chatgpt-web-zero-risk"
-    : "codex-chatgpt-web";
+    ? "codax-zero-risk"
+    : "codax";
   const profileName = config.purpose === DEV_CONFIG_PURPOSE
     ? interactionMode === "manual" ? `${DEV_TUNNEL_BASE_NAME}-zero-risk` : DEV_TUNNEL_BASE_NAME
     : productionProfileName;
@@ -474,7 +474,7 @@ function prepareSetup(options: SetupOptions): PreparedSetup {
   if (!launcherOwned && process.platform !== "darwin") {
     throw new Error(
       "Terminal-only managed Chrome setup currently requires macOS. "
-      + "Use the Codex Web GPT launcher on Windows or Linux.",
+      + "Use the Codax launcher on Windows or Linux.",
     );
   }
   return { existing, config, launcherOwned };
@@ -538,7 +538,7 @@ export async function setup(options: SetupOptions): Promise<SetupResult> {
     }
   }
   if (beforeService.loaded && !existing) {
-    throw new Error("A codex-chatgpt-web service is loaded but its configuration is missing; refusing to replace an unverifiable process");
+    throw new Error("A codax service is loaded but its configuration is missing; refusing to replace an unverifiable process");
   }
 
   let loginCreated = false;

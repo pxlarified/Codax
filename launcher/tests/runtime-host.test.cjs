@@ -9,7 +9,7 @@ const { RuntimeHost } = require("../electron/runtime.cjs");
 function hostFor(existingConfig, interactionMode = "automatic") {
   const host = new RuntimeHost({
     app: {
-      getPath: () => path.join(os.tmpdir(), "codex-web-gpt-runtime-host-test"),
+      getPath: () => path.join(os.tmpdir(), "codax-runtime-host-test"),
       getVersion: () => "1.1.3",
     },
     logger: { info() {}, warn() {}, error() {} },
@@ -35,7 +35,7 @@ function hostFor(existingConfig, interactionMode = "automatic") {
 function devHostFor(existingConfig, interactionMode = "automatic") {
   const host = new RuntimeHost({
     app: {
-      getPath: () => path.join(os.tmpdir(), "codex-web-gpt-dev-runtime-host-test"),
+      getPath: () => path.join(os.tmpdir(), "codax-dev-runtime-host-test"),
       getVersion: () => "1.1.3",
     },
     logger: { info() {}, warn() {}, error() {} },
@@ -235,7 +235,7 @@ test("DEV setup child environment removes launcher-rebound production aliases", 
 });
 
 test("DEV MCP setup reuses only DEV-home credentials and targets its distinct connector", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-dev-mcp-host-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-dev-mcp-host-"));
   const runtimeKeyFile = path.join(root, "runtime.key");
   fs.writeFileSync(runtimeKeyFile, "private key\n", { mode: 0o600 });
   const fixture = devHostFor({
@@ -268,7 +268,7 @@ test("DEV MCP setup reuses only DEV-home credentials and targets its distinct co
 });
 
 test("DEV doctor requires live tunnel readiness without probing a Responses listener", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-dev-doctor-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-dev-doctor-"));
   const runtimeKeyFile = path.join(root, "runtime.key");
   fs.writeFileSync(runtimeKeyFile, "private key\n", { mode: 0o600 });
   const fixture = devHostFor({
@@ -358,7 +358,7 @@ test("launcher update transaction upgrades its owned full runtime with saved con
 });
 
 test("a failed version upgrade preserves setup inputs without starting an incompatible old runtime", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-upgrade-failure-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-upgrade-failure-"));
   const configPath = path.join(root, "config.json");
   const config = { mode: "browser-only", browserHost: "launcher", releaseVersion: "6.1.4" };
   fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`);
@@ -474,7 +474,7 @@ test("launcher update transaction leaves current and externally owned runtimes u
 });
 
 test("MCP setup reuses valid private credentials without exposing or rewriting them", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-saved-mcp-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-saved-mcp-"));
   const keyPath = path.join(root, "tunnel-runtime.key");
   fs.writeFileSync(keyPath, "saved-private-runtime-key\n", { mode: 0o600 });
   const fixture = hostFor({
@@ -562,7 +562,7 @@ function bridgeFixture({ active, recovery = false }) {
     },
   };
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-bridge-test") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-bridge-test") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -628,7 +628,7 @@ test("failed runtime cleanup during removal still restores the previous Codex ro
   const calls = [];
   const config = { mode: "full", browserHost: "launcher", releaseVersion: "1.1.2" };
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-uninstall-fail-safe") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-uninstall-fail-safe") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -666,7 +666,7 @@ test("integration removal is accepted only after a new status process observes i
   const calls = [];
   const config = { mode: "browser-only", browserHost: "launcher", releaseVersion: "2.1.8" };
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-uninstall-success") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-uninstall-success") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -701,7 +701,7 @@ test("integration removal rejects a command that leaves an inactive journal behi
   const calls = [];
   const config = { mode: "browser-only", browserHost: "launcher", releaseVersion: "2.1.8" };
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-uninstall-stale") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-uninstall-stale") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -760,7 +760,7 @@ test("connector verification uses the current identity and rejects a legacy loca
 });
 
 test("launcher-controlled CLI operations use the live descriptor token", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-runtime-control-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-runtime-control-"));
   const descriptorPath = path.join(root, "launcher-browser.json");
   fs.writeFileSync(descriptorPath, `${JSON.stringify({
     pid: process.pid,
@@ -783,7 +783,7 @@ test("launcher-controlled CLI operations use the live descriptor token", () => {
 });
 
 test("failed first-time setup removes its route before restoring the unconfigured state", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-first-setup-rollback-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-first-setup-rollback-"));
   const coreHome = path.join(root, "core");
   const codexHome = path.join(root, "codex");
   const journalPath = path.join(coreHome, "codex", "integration-journal.json");
@@ -855,7 +855,7 @@ test("failed first-time setup removes its route before restoring the unconfigure
 });
 
 test("a failed setup preflight leaves the previous runtime running and untouched", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-setup-preflight-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-setup-preflight-"));
   const configPath = path.join(root, "config.json");
   const config = { mode: "browser-only", browserHost: "launcher", releaseVersion: "4.0.7" };
   fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`);
@@ -929,7 +929,7 @@ test("a browser-mode commit failure restores the previous runtime inside setup",
   let runtimeRestores = 0;
   const host = new RuntimeHost({
     app: {
-      getPath: () => path.join(os.tmpdir(), "codex-web-gpt-browser-commit-rollback"),
+      getPath: () => path.join(os.tmpdir(), "codax-browser-commit-rollback"),
       getVersion: () => "1.1.3",
     },
     logger: { info() {}, warn() {}, error() {} },
@@ -964,7 +964,7 @@ test("launcher delegates an existing terminal-managed installation to the migrat
   let config = { mode: "full", browserHost: "managed-chrome", releaseVersion: "0.1.16" };
   let prepared = 0;
   let launcherStops = 0;
-  const coreHome = path.join(os.tmpdir(), "codex-web-gpt-runtime-host-migration-core");
+  const coreHome = path.join(os.tmpdir(), "codax-runtime-host-migration-core");
   const supervisor = {
     coreHome,
     configPath: path.join(coreHome, "config.json"),
@@ -978,7 +978,7 @@ test("launcher delegates an existing terminal-managed installation to the migrat
     startIfConfigured: async () => ({ status: "ready" }),
   };
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-runtime-host-migration") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-runtime-host-migration") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -1000,9 +1000,9 @@ test("launcher delegates an existing terminal-managed installation to the migrat
 test("failed terminal migration verifies the unchanged previous runtime instead of claiming recovery", async () => {
   const config = { mode: "browser-only", browserHost: "managed-chrome", releaseVersion: "0.1.16" };
   const calls = [];
-  const coreHome = path.join(os.tmpdir(), "codex-web-gpt-runtime-host-migration-failure-core");
+  const coreHome = path.join(os.tmpdir(), "codax-runtime-host-migration-failure-core");
   const host = new RuntimeHost({
-    app: { getPath: () => path.join(os.tmpdir(), "codex-web-gpt-runtime-host-migration-failure") },
+    app: { getPath: () => path.join(os.tmpdir(), "codax-runtime-host-migration-failure") },
     logger: { info() {}, warn() {}, error() {} },
     sourceRoot: "/source",
     browserDescriptorPath: "/runtime/launcher-browser.json",
@@ -1035,7 +1035,7 @@ test("failed terminal migration verifies the unchanged previous runtime instead 
 });
 
 test("failed fresh-conversation setting restores every mutable setup file before restarting the previous runtime", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-setup-checkpoint-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-setup-checkpoint-"));
   const coreHome = path.join(root, "core");
   const codexHome = path.join(root, "codex");
   const configPath = path.join(coreHome, "config.json");
@@ -1137,13 +1137,13 @@ test("failed fresh-conversation setting restores every mutable setup file before
 });
 
 test("failed terminal migration restores removed launchd ownership before verifying the old runtime", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-terminal-checkpoint-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-terminal-checkpoint-"));
   const coreHome = path.join(root, "core");
   const codexHome = path.join(root, "codex");
   const launchAgentsDir = path.join(root, "LaunchAgents");
   const configPath = path.join(coreHome, "config.json");
-  const daemonPlist = path.join(launchAgentsDir, "io.github.codex-chatgpt-web.daemon.plist");
-  const tunnelPlist = path.join(launchAgentsDir, "io.github.codex-chatgpt-web.tunnel.plist");
+  const daemonPlist = path.join(launchAgentsDir, "com.mizius.codax.daemon.plist");
+  const tunnelPlist = path.join(launchAgentsDir, "io.github.codax.tunnel.plist");
   const oldConfig = {
     mode: "full",
     browserHost: "managed-chrome",
@@ -1217,7 +1217,7 @@ test("failed terminal migration restores removed launchd ownership before verify
 });
 
 test("macOS passkey capture uses an isolated launcher-controlled transfer", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-passkey-runtime-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-passkey-runtime-"));
   const chrome = path.join(root, "Google Chrome");
   fs.writeFileSync(chrome, "#!/bin/sh\nexit 0\n", { mode: 0o700 });
   const host = new RuntimeHost({

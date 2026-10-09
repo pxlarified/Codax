@@ -27,7 +27,7 @@ async function runCli(args: string[], env: Record<string, string | undefined>) {
 }
 
 test("production and DEV setup reject the removed connector-name option before configuration", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-fixed-connector-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-fixed-connector-"));
   try {
     const env = {
       ...process.env,
@@ -74,7 +74,7 @@ test("production and DEV setup reject conflicting conversation modes before conf
 });
 
 test("setup validates the port before performing runtime work", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-"));
   try {
     const result = await runCli([
       "setup",
@@ -102,7 +102,7 @@ test("setup validates the port before performing runtime work", async () => {
 });
 
 test("setup browser-interaction flags are explicit and mutually exclusive", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-interaction-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-interaction-"));
   try {
     const result = await runCli([
       "setup",
@@ -138,7 +138,7 @@ test("setup browser-interaction flags are explicit and mutually exclusive", asyn
 });
 
 test("manual setup rejects capability refresh and Bigger Context", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-manual-invalid-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-manual-invalid-"));
   try {
     const env = {
       ...process.env,
@@ -179,7 +179,7 @@ test("manual setup rejects capability refresh and Bigger Context", async () => {
 }, 20_000);
 
 test("passkey capture cannot be invoked outside the live Launcher control channel", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-passkey-auth-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-passkey-auth-"));
   try {
     const result = await runCli([
       "login",
@@ -198,7 +198,7 @@ test("passkey capture cannot be invoked outside the live Launcher control channe
 });
 
 test("DEV chat list works without starting launcher, broker, or Responses services", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-list-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-list-"));
   try {
     const result = await runCli(["dev", "list"], {
       ...process.env,
@@ -214,7 +214,7 @@ test("DEV chat list works without starting launcher, broker, or Responses servic
 });
 
 test("DEV help exposes separate history-fill and live composer-fill operations", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-help-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-help-"));
   try {
     const result = await runCli(["dev", "help"], {
       ...process.env,
@@ -232,7 +232,7 @@ test("DEV help exposes separate history-fill and live composer-fill operations",
 });
 
 test("DEV status reports the isolated home without creating a Codex route", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-status-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-status-"));
   const devHome = join(root, "dev");
   try {
     const result = await runCli(["dev", "status", "--json"], {
@@ -260,7 +260,7 @@ test("DEV status reports the isolated home without creating a Codex route", asyn
 });
 
 test("DEV chat explains the isolated launcher setup when its profile is empty", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-empty-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-empty-"));
   try {
     const result = await runCli(["dev", "chat", "smoke", "hello"], {
       ...process.env,
@@ -276,7 +276,7 @@ test("DEV chat explains the isolated launcher setup when its profile is empty", 
 });
 
 test("generic --home cannot collapse DEV mode into another runtime home", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-home-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-home-"));
   try {
     const result = await runCli(["--home", join(root, "shared"), "dev", "status"], {
       ...process.env,
@@ -290,7 +290,7 @@ test("generic --home cannot collapse DEV mode into another runtime home", async 
 });
 
 test("DEV browser-only setup persists only the isolated harness profile", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-setup-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-setup-"));
   const devHome = join(root, "dev");
   const descriptorPath = join(devHome, "runtime", "launcher-browser.json");
   const helperScript = join(root, "helper.cjs");
@@ -323,13 +323,13 @@ test("DEV browser-only setup persists only the isolated harness profile", async 
     writeFileSync(helperScript, "module.exports = {};\n", { mode: 0o700 });
     writeFileSync(descriptorPath, `${JSON.stringify({
       version: 3,
-      kind: "codex-web-gpt-launcher",
+      kind: "codax-launcher",
       profile: "development",
       pid: process.pid,
       endpoint: "http://127.0.0.1:48121",
       control: { endpoint: `http://127.0.0.1:${address.port}`, token: controlToken },
       helper: { executable: process.execPath, script: helperScript },
-      partition: "persist:codex-web-gpt-dev-chatgpt",
+      partition: "persist:codax-dev-chatgpt",
       idleUrl: LAUNCHER_BROWSER_IDLE_URL,
       surfaceId: "d".repeat(32),
       surfaceTargets: { ["d".repeat(32)]: "native-owned-target" },
@@ -372,7 +372,7 @@ test("DEV browser-only setup persists only the isolated harness profile", async 
 });
 
 test("DEV setup accepts explicit browser-interaction flags and preserves manual fail-closed validation", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-dev-interaction-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-dev-interaction-"));
   const devHome = join(root, "dev");
   const descriptorPath = join(devHome, "runtime", "launcher-browser.json");
   const helperScript = join(root, "helper.cjs");
@@ -381,7 +381,7 @@ test("DEV setup accepts explicit browser-interaction flags and preserves manual 
     writeFileSync(helperScript, "module.exports = {};\n", { mode: 0o700 });
     writeFileSync(descriptorPath, `${JSON.stringify({
       version: 3,
-      kind: "codex-web-gpt-launcher",
+      kind: "codax-launcher",
       profile: "development",
       pid: process.pid,
       endpoint: "http://127.0.0.1:48131",
@@ -390,7 +390,7 @@ test("DEV setup accepts explicit browser-interaction flags and preserves manual 
         token: "dev-manual-control-token-0123456789abcdefghijklmnop",
       },
       helper: { executable: process.execPath, script: helperScript },
-      partition: "persist:codex-web-gpt-dev-chatgpt",
+      partition: "persist:codax-dev-chatgpt",
       idleUrl: LAUNCHER_BROWSER_IDLE_URL,
       surfaceId: "m".repeat(32),
       surfaceTargets: { ["m".repeat(32)]: "native-owned-target" },
@@ -431,7 +431,7 @@ test("DEV setup accepts explicit browser-interaction flags and preserves manual 
 });
 
 test("browser check uses metadata-only launcher liveness in Zero Risk", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-manual-browser-check-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-manual-browser-check-"));
   const appHome = join(root, "app");
   const descriptorPath = join(appHome, "runtime", "launcher-browser.json");
   const helperScript = join(root, "helper.cjs");
@@ -455,7 +455,7 @@ test("browser check uses metadata-only launcher liveness in Zero Risk", async ()
     writeFileSync(helperScript, "module.exports = {};\n", { mode: 0o700 });
     writeFileSync(descriptorPath, `${JSON.stringify({
       version: 3,
-      kind: "codex-web-gpt-launcher",
+      kind: "codax-launcher",
       profile: "production",
       pid: process.pid,
       endpoint: `http://127.0.0.1:${address.port}`,
@@ -464,7 +464,7 @@ test("browser check uses metadata-only launcher liveness in Zero Risk", async ()
         token: "manual-browser-check-token-0123456789abcdefghijklmnop",
       },
       helper: { executable: process.execPath, script: helperScript },
-      partition: "persist:codex-web-gpt-chatgpt",
+      partition: "persist:codax-chatgpt",
       idleUrl: LAUNCHER_BROWSER_IDLE_URL,
       surfaceId: "s".repeat(32),
       surfaceTargets: { ["s".repeat(32)]: "native-owned-target" },
@@ -502,7 +502,7 @@ test("browser check uses metadata-only launcher liveness in Zero Risk", async ()
 });
 
 test("terminal uninstall refuses to race a launcher-owned runtime", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-uninstall-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-uninstall-"));
   const appHome = join(root, "app");
   const configPath = join(appHome, "config.json");
   mkdirSync(appHome, { recursive: true });
@@ -535,7 +535,7 @@ test("terminal uninstall refuses to race a launcher-owned runtime", async () => 
       CODEX_CHATGPT_WEB_HOME: appHome,
     });
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("must be removed from Codex Web GPT Settings");
+    expect(result.stderr).toContain("must be removed from Codax Settings");
     expect(existsSync(configPath)).toBe(true);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -543,7 +543,7 @@ test("terminal uninstall refuses to race a launcher-owned runtime", async () => 
 });
 
 test("authorized launcher uninstall does not re-probe an already stopped full runtime", async () => {
-  const root = mkdtempSync(join(tmpdir(), "codex-chatgpt-web-cli-launcher-uninstall-"));
+  const root = mkdtempSync(join(tmpdir(), "codax-cli-launcher-uninstall-"));
   const appHome = join(root, "app");
   const codexHome = join(root, "codex");
   const descriptorPath = join(appHome, "runtime", "launcher-browser.json");
@@ -557,13 +557,13 @@ test("authorized launcher uninstall does not re-probe an already stopped full ru
   writeFileSync(runtimeKeyFile, "test-key\n");
   writeFileSync(descriptorPath, `${JSON.stringify({
     version: 3,
-    kind: "codex-web-gpt-launcher",
+    kind: "codax-launcher",
     profile: "production",
     pid: process.pid,
     endpoint: "http://127.0.0.1:48111",
     control: { endpoint: "http://127.0.0.1:48112", token },
     helper: { executable: process.execPath, script: helperScript },
-    partition: "persist:codex-web-gpt-chatgpt",
+    partition: "persist:codax-chatgpt",
     idleUrl: LAUNCHER_BROWSER_IDLE_URL,
     surfaceId: "a".repeat(32),
     surfaceTargets: { ["a".repeat(32)]: "native-owned-target" },
@@ -592,8 +592,8 @@ test("authorized launcher uninstall does not re-probe an already stopped full ru
       tunnelId: "tunnel_0123456789abcdef0123456789abcdef",
       runtimeKeyFile,
       profileDir: join(appHome, "tunnel", "profiles"),
-      profileName: "codex-chatgpt-web",
-      alias: "codex-chatgpt-web",
+      profileName: "codax",
+      alias: "codax",
     },
   })}\n`);
   try {

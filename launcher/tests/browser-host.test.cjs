@@ -112,7 +112,7 @@ test("descriptor publishes native surface identities without inspecting renderer
     surfaceId: "h".repeat(32), view: { webContents: contents("home-target") },
     turnTabs: new Map([["automatic", automatic], ["manual", manual]]),
     getBrowserInteractionMode: () => "automatic", profile: "production", cdpPort: 40000,
-    partition: "persist:codex-web-gpt-chatgpt", control: {}, helper: {},
+    partition: "persist:codax-chatgpt", control: {}, helper: {},
     descriptorPath: require("node:path").join(dir, "descriptor.json"),
   };
   try {
@@ -137,7 +137,7 @@ test("mode transitions publish targets before setup inspection and restore them 
     view: { webContents: { isDestroyed: () => false, getOrCreateDevToolsTargetId: () => "home-target" } },
     turnTabs: new Map(), getBrowserInteractionMode: () => savedMode,
     interactionModeOverride: null, manualOperation: null,
-    profile: "production", cdpPort: 40000, partition: "persist:codex-web-gpt-chatgpt",
+    profile: "production", cdpPort: 40000, partition: "persist:codax-chatgpt",
     control: {}, helper: {}, descriptorPath: require("node:path").join(dir, "descriptor.json"),
     markOwnedSurface: async () => {},
     configureAnnouncementDismissal: async enabled => announcementModes.push(enabled),
@@ -1918,14 +1918,14 @@ test("launcher delegates every ChatGPT model and turn operation to the shared br
     setState: patch => calls.push(["state", patch]),
     runBrowserHelperOperation: async options => {
       calls.push(["helper", options]);
-      return { type: "result", value: { effort: "High", response: "CODEX WEB GPT READY" } };
+      return { type: "result", value: { effort: "High", response: "CODAX READY" } };
     },
   });
 
   assert.deepEqual(await BrowserHost.prototype.runSmokeTest.call(fixture), {
     ok: true,
     effort: "High",
-    response: "CODEX WEB GPT READY",
+    response: "CODAX READY",
   });
   const helperCall = calls.find(call => call[0] === "helper")[1];
   assert.equal(helperCall.operation, "smoke");

@@ -24,7 +24,7 @@ require_native_elf() {
   fi
 }
 require_native_elf "$APPIMAGE_PATH"
-TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/codex-web-gpt-appimage-smoke.XXXXXX")"
+TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/codax-appimage-smoke.XXXXXX")"
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
 SMOKE_APPIMAGE="$TEMP_DIR/$(basename -- "$APPIMAGE_PATH")"
 cp "$APPIMAGE_PATH" "$SMOKE_APPIMAGE"

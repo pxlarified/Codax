@@ -154,7 +154,7 @@ export function expandUserPath(value: string): string {
 
 export function getConfigDir(): string {
   const configured = process.env.CODEX_CHATGPT_WEB_HOME?.trim();
-  return resolve(expandUserPath(configured || join(homedir(), ".codex-chatgpt-web")));
+  return resolve(expandUserPath(configured || join(homedir(), ".codax")));
 }
 
 export function getConfigPath(): string {
@@ -168,7 +168,7 @@ export function isWindowsPipeEndpoint(value: string): boolean {
 export function defaultBrokerEndpoint(home = getConfigDir(), platform = process.platform): string {
   if (platform !== "win32") return join(home, "runtime", "turn-broker.sock");
   const identity = createHash("sha256").update(resolve(home).toLowerCase()).digest("hex").slice(0, 20);
-  return `\\\\.\\pipe\\codex-chatgpt-web-${identity}`;
+  return `\\\\.\\pipe\\codax-${identity}`;
 }
 
 export function resolveBrokerEndpoint(value: string): string {
@@ -379,13 +379,13 @@ export function defaultChromeExecutable(
 
 export function loadConfig(): AppConfig {
   const path = getConfigPath();
-  if (!existsSync(path)) throw new Error(`Configuration is missing: ${path}. Run codex-chatgpt-web setup first.`);
+  if (!existsSync(path)) throw new Error(`Configuration is missing: ${path}. Run codax setup first.`);
   return parseConfig(JSON.parse(stripUtf8Bom(readFileSync(path, "utf8"))), path);
 }
 
 export function loadConfigForSetup(): AppConfig {
   const path = getConfigPath();
-  if (!existsSync(path)) throw new Error(`Configuration is missing: ${path}. Run codex-chatgpt-web setup first.`);
+  if (!existsSync(path)) throw new Error(`Configuration is missing: ${path}. Run codax setup first.`);
   const raw = JSON.parse(stripUtf8Bom(readFileSync(path, "utf8"))) as Record<string, unknown>;
   if (raw.version === 1 && raw.mode === "pro-only") {
     raw.version = 2;

@@ -26,8 +26,8 @@ test("the full verification gate audits launcher dependencies", () => {
 });
 
 test("launcher publishes native packages for all supported desktop operating systems", () => {
-  assert.equal(manifest.build.appId, "dev.codexwebgpt.launcher");
-  assert.equal(manifest.build.artifactName, "codex-web-gpt-${version}-${os}-${arch}.${ext}");
+  assert.equal(manifest.build.appId, "com.mizius.codax");
+  assert.equal(manifest.build.artifactName, "codax-${version}-${os}-${arch}.${ext}");
   assert.deepEqual(manifest.build.mac.target, ["dmg", "zip"]);
   assert.deepEqual(
     manifest.build.mac.signIgnore,
@@ -60,7 +60,7 @@ test("release installers resolve checksummed native launcher assets", () => {
   }
   assert.match(shellInstaller, /PLATFORM="mac"/);
   assert.match(shellInstaller, /PLATFORM="linux"/);
-  assert.match(shellInstaller, /codex-web-gpt\.desktop/);
+  assert.match(shellInstaller, /codax\.desktop/);
   assert.match(shellInstaller, /--appimage-extract/);
   assert.match(packager, /-linux-x86_64\(\?=\\\.\).*?-linux-x64/);
   assert.match(packager, /const executable = "node"/);
@@ -81,7 +81,7 @@ test("release installers resolve checksummed native launcher assets", () => {
       < shellInstaller.indexOf('"$TEMP_DIR/$ASSET" --appimage-extract'),
     "the downloaded AppImage must be executable before it is inspected",
   );
-  assert.match(windowsInstaller, /codex-web-gpt-\$Version-win-\$Arch\.exe/);
+  assert.match(windowsInstaller, /codax-\$Version-win-\$Arch\.exe/);
   assert.match(windowsInstaller, /\[Environment\]::Is64BitOperatingSystem/);
   assert.doesNotMatch(windowsInstaller, /RuntimeInformation/);
   assert.match(windowsInstaller, /function Test-IsFullyQualifiedWindowsPath/);
@@ -90,11 +90,11 @@ test("release installers resolve checksummed native launcher assets", () => {
   const windowsPathPattern = windowsInstaller.match(/return \$Path -match '([^']+)'/)?.[1];
   assert.ok(windowsPathPattern, "the Windows installer must expose its absolute-path contract");
   const fullyQualifiedWindowsPath = new RegExp(windowsPathPattern);
-  assert.equal(fullyQualifiedWindowsPath.test("C:\\Users\\tester\\Codex Web GPT"), true);
-  assert.equal(fullyQualifiedWindowsPath.test("\\\\server\\share\\Codex Web GPT"), true);
-  assert.equal(fullyQualifiedWindowsPath.test("C:Codex Web GPT"), false);
-  assert.equal(fullyQualifiedWindowsPath.test("\\Codex Web GPT"), false);
-  assert.equal(fullyQualifiedWindowsPath.test("Codex Web GPT"), false);
+  assert.equal(fullyQualifiedWindowsPath.test("C:\\Users\\tester\\Codax"), true);
+  assert.equal(fullyQualifiedWindowsPath.test("\\\\server\\share\\Codax"), true);
+  assert.equal(fullyQualifiedWindowsPath.test("C:Codax"), false);
+  assert.equal(fullyQualifiedWindowsPath.test("\\Codax"), false);
+  assert.equal(fullyQualifiedWindowsPath.test("Codax"), false);
   assert.ok(windowsInstaller.includes(`HKCU:\\Software\\${manifest.build.nsis.guid}`));
   assert.ok(devProfile.includes(`WINDOWS_LAUNCHER_GUID = "${manifest.build.nsis.guid}"`));
   assert.match(windowsInstaller, /Get-ItemPropertyValue[\s\S]*InstallLocation/);
@@ -160,7 +160,7 @@ printf '#!/bin/sh\\nexit 0\\n' > squashfs-root/resources/app.asar.unpacked/asset
       const root = path.join(scratch, `${machine}-${valid}`);
       fs.mkdirSync(root);
       fs.writeFileSync(path.join(root, "fixture.AppImage"), appImage);
-      const asset = `codex-web-gpt-1.2.3-linux-${arch}.AppImage`;
+      const asset = `codax-1.2.3-linux-${arch}.AppImage`;
       const checksum = valid ? createHash("sha256").update(appImage).digest("hex") : "0".repeat(64);
       fs.writeFileSync(path.join(root, "checksums.txt"), `${checksum}  ${asset}\n`);
       const result = spawnSync("/bin/sh", [path.join(repositoryRoot, "scripts", "install-launcher.sh")], {
@@ -180,8 +180,8 @@ printf '#!/bin/sh\\nexit 0\\n' > squashfs-root/resources/app.asar.unpacked/asset
         assert.match(fs.readFileSync(path.join(root, "downloads"), "utf8"), new RegExp(`${asset.replaceAll(".", "\\.")}$`, "m"));
         if (valid) {
           assert.equal(result.status, 0, result.stderr);
-          assert.deepEqual(fs.readFileSync(path.join(root, "lib", "1.2.3", "Codex Web GPT.AppImage")), appImage);
-          assert.ok(fs.existsSync(path.join(root, "data", "applications", "codex-web-gpt.desktop")));
+          assert.deepEqual(fs.readFileSync(path.join(root, "lib", "1.2.3", "Codax.AppImage")), appImage);
+          assert.ok(fs.existsSync(path.join(root, "data", "applications", "codax.desktop")));
         } else {
           assert.notEqual(result.status, 0);
           assert.match(result.stderr, /SHA-256 verification failed/);
@@ -213,11 +213,11 @@ test("CI packages and smoke-launches on macOS, Windows, and Linux", () => {
   assert.match(release, /prepare-linux-libnotify\.sh/);
   assert.match(release, /prepare-linux-appimage-tools\.cjs/);
   assert.match(release, /archlinux:base/);
-  assert.match(release, /runner: ubuntu-24\.04-arm\s+runtime_asset: codex-chatgpt-web-linux-arm64\.tar\.gz/);
+  assert.match(release, /runner: ubuntu-24\.04-arm\s+runtime_asset: codax-linux-arm64\.tar\.gz/);
   assert.match(release, /Verify Linux AppImage ABI on current Arch\s+if: runner\.os == 'Linux' && runner\.arch == 'X64'/);
   assert.match(release, /prepare-windows-baseline-bun\.ps1 -Version 1\.4\.0/);
   assert.match(release, /codesign --verify --deep --strict --verbose=2/);
-  assert.match(release, /Codex Web GPT\.app/);
+  assert.match(release, /Codax\.app/);
   assert.doesNotMatch(release, /gh release create[\s\S]*?--draft/);
 });
 
@@ -229,9 +229,9 @@ test("Linux AppImage fallback uses one owned extraction and removes it on exit",
   // macOS and failed for everyone running `bun test` locally. Returning early is the one form both
   // runners agree on.
   if (process.platform !== "linux") return;
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-appimage-runner-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-appimage-runner-"));
   const runtime = path.join(root, "runtime");
-  const appImage = path.join(root, "Codex Web GPT.AppImage");
+  const appImage = path.join(root, "Codax.AppImage");
   const appRunSource = path.join(root, "AppRun");
   const marker = path.join(root, "launched");
   const runner = path.join(launcherRoot, "assets", "linux-appimage-runner.sh");
@@ -249,7 +249,7 @@ test("Linux AppImage fallback uses one owned extraction and removes it on exit",
     "chmod 0755 squashfs-root/AppRun",
     "",
   ].join("\n"), { mode: 0o755 });
-  const fallbackRoot = path.join(runtime, `codex-web-gpt-appimage-${process.getuid?.() ?? 0}`);
+  const fallbackRoot = path.join(runtime, `codax-appimage-${process.getuid?.() ?? 0}`);
   const stale = path.join(fallbackRoot, "run.stale");
   const active = path.join(fallbackRoot, "run.active");
   const ownerStart = fs.readFileSync(`/proc/${process.pid}/stat`, "utf8")

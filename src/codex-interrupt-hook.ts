@@ -7,9 +7,9 @@ import { getConfigDir } from "./config";
 import type { InstalledCodexInterruptHook } from "./codex-integration-shared";
 
 export const MANAGED_INTERRUPT_HOOK_START =
-  "# Managed by codex-chatgpt-web: release the exact Responses request when its Codex turn is interrupted.";
+  "# Managed by codax: release the exact Responses request when its Codex turn is interrupted.";
 export const MANAGED_INTERRUPT_HOOK_END =
-  "# End codex-chatgpt-web interrupt lifecycle hook.";
+  "# End codax interrupt lifecycle hook.";
 
 function canonicalJson(value: unknown): unknown {
   if (value instanceof Date) return value.toISOString();
@@ -94,7 +94,7 @@ export function installCodexInterruptHookCommand(
   command: string,
 ): { text: string; installed: InstalledCodexInterruptHook } {
   if (managedMarkerCount(text) !== 0 || text.includes(MANAGED_INTERRUPT_HOOK_END)) {
-    throw new Error("Codex config already contains a codex-chatgpt-web interrupt hook marker");
+    throw new Error("Codex config already contains a codax interrupt hook marker");
   }
   const groups = parseHookDocument(text).hooks?.Interrupt;
   if (groups !== undefined && !Array.isArray(groups)) throw new Error("Codex Interrupt hooks must be an array");

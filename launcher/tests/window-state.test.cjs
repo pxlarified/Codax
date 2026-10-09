@@ -57,7 +57,7 @@ test("restore fits a partly visible window into its remaining display", () => {
 });
 
 test("window state is stored atomically with owner-only permissions", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-window-state-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-window-state-"));
   const file = path.join(root, "window-state.json");
   try {
     const state = {

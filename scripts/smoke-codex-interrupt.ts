@@ -25,7 +25,7 @@ if (bundled.status !== 0) {
 }
 const nativeCatalog = JSON.parse(bundled.stdout);
 
-const root = join(tmpdir(), `codex-chatgpt-web-interrupt-${process.pid}-${Date.now()}`);
+const root = join(tmpdir(), `codax-interrupt-${process.pid}-${Date.now()}`);
 const codexHome = join(root, "codex");
 const appHome = join(root, "app");
 mkdirSync(codexHome, { recursive: true });
@@ -188,7 +188,7 @@ const client = new AppServerClient();
 let smokeError: unknown;
 try {
   await client.request("initialize", {
-    clientInfo: { name: "codex-chatgpt-web-interrupt-smoke", version: "1" },
+    clientInfo: { name: "codax-interrupt-smoke", version: "1" },
     capabilities: { experimentalApi: true },
   });
   client.notify("initialized");

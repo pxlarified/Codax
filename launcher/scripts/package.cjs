@@ -63,7 +63,7 @@ if (target === "--linux") {
   }
 }
 
-const staging = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-package-"));
+const staging = fs.mkdtempSync(path.join(os.tmpdir(), "codax-package-"));
 const artifactsDirectory = path.join(root, "artifacts");
 
 function runChecked(command, args) {
@@ -85,7 +85,7 @@ function verifySignedMacArchive() {
   if (archives.length !== 1) {
     throw new Error(`Expected exactly one macOS ZIP for verification; found ${archives.join(", ") || "none"}`);
   }
-  const verificationRoot = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-mac-verify-"));
+  const verificationRoot = fs.mkdtempSync(path.join(os.tmpdir(), "codax-mac-verify-"));
   try {
     runChecked("ditto", ["-x", "-k", path.join(staging, archives[0]), verificationRoot]);
     const appBundle = path.join(verificationRoot, `${launcherManifest.build.productName}.app`);

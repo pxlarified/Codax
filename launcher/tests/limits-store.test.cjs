@@ -11,7 +11,7 @@ const A = "a".repeat(64);
 const B = "b".repeat(64);
 const START = Date.UTC(2026, 8, 19);
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-limits-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-limits-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const file = path.join(root, "limits.json");
   let time = START;

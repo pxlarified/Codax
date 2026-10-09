@@ -234,7 +234,7 @@ test("response caching rechecks CSS visibility without requiring a DOM mutation"
   });
   try {
     for (const target of ["answer", "copy"]) {
-      const window = createWindow('<article id="old"><button data-testid="copy-turn-action-button">Copy</button></article><article id="turn"><div class="markdown" id="answer">CODEX WEB GPT READY</div><button id="copy" data-testid="copy-turn-action-button">Copy</button></article>');
+      const window = createWindow('<article id="old"><button data-testid="copy-turn-action-button">Copy</button></article><article id="turn"><div class="markdown" id="answer">CODAX READY</div><button id="copy" data-testid="copy-turn-action-button">Copy</button></article>');
       let visible = false;
       const context = createContext({
         document: window.document, HTMLElement: window.HTMLElement, Element: window.Element, Node: window.Node,
@@ -259,14 +259,14 @@ test("response caching rechecks CSS visibility without requiring a DOM mutation"
       const first = await worker.responseDomSnapshot(locator, cache);
       expect(evaluationErrors).toEqual([]);
       expect(first.completionActionVisible).toBeFalse();
-      expect(first.visibleText).toBe(target === "answer" ? "" : "CODEX WEB GPT READY");
+      expect(first.visibleText).toBe(target === "answer" ? "" : "CODAX READY");
       await worker.responseDomSnapshot(locator, cache);
       expect(cache.fullScans).toBe(1);
       expect(cache.cacheHits).toBe(1);
       // A stylesheet/animation changes computed opacity; no subtree mutation occurs.
       visible = true;
       expect(await worker.responseDomSnapshot(locator, cache)).toMatchObject({
-        visibleText: "CODEX WEB GPT READY", completionActionVisible: true,
+        visibleText: "CODAX READY", completionActionVisible: true,
       });
       expect(cache.fullScans).toBe(2);
       await worker.responseDomSnapshot(locator, cache);

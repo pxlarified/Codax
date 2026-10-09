@@ -2467,7 +2467,7 @@ function FatalMessage({ message }: { message: string }) {
   return (
     <main className="fatal-message">
       <BrandMark />
-      <h1>Codex Web GPT</h1>
+      <h1>Codax</h1>
       <p>{message}</p>
     </main>
   );
@@ -2475,7 +2475,7 @@ function FatalMessage({ message }: { message: string }) {
 
 function browserTabTitleFromTitle(value: string | undefined, copy: Copy): string {
   const title = value?.trim();
-  if (!title || title === "about:blank" || title.includes("codex-web-gpt-browser-host")) return copy.temporaryChat;
+  if (!title || title === "about:blank" || title.includes("codax-browser-host")) return copy.temporaryChat;
   return title.replace(/\s*[|–-]\s*ChatGPT\s*$/i, "") || copy.temporaryChat;
 }
 

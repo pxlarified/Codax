@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-win-x64.exe"><img src="assets/readme/download-windows.svg" width="224" height="64" alt="Windows · x64"></a>&nbsp;
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-mac-arm64.dmg"><img src="assets/readme/download-macos.svg" width="224" height="64" alt="macOS · Apple silicon"></a>&nbsp;
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-linux-x64.AppImage"><img src="assets/readme/download-linux.svg" width="224" height="64" alt="Linux · x64"></a>
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-win-x64.exe"><img src="assets/readme/download-windows.svg" width="224" height="64" alt="Windows · x64"></a>&nbsp;
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-mac-arm64.dmg"><img src="assets/readme/download-macos.svg" width="224" height="64" alt="macOS · Apple silicon"></a>&nbsp;
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-linux-x64.AppImage"><img src="assets/readme/download-linux.svg" width="224" height="64" alt="Linux · x64"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-mac-x64.dmg">macOS Intel</a> · <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/latest">すべてのリリース</a>
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-mac-x64.dmg">macOS Intel</a> · <a href="https://github.com/pxlarified/Codax/releases/latest">すべてのリリース</a>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="#get-started">使い始める</a> · <a href="https://github.com/miuuyy/codex-chatgpt-web/releases">更新内容</a> · <a href="docs/architecture.md">アーキテクチャ</a> · <a href="TROUBLESHOOTING.md">トラブルシューティング</a>
+  <a href="#get-started">使い始める</a> · <a href="https://github.com/pxlarified/Codax/releases">更新内容</a> · <a href="docs/architecture.md">アーキテクチャ</a> · <a href="TROUBLESHOOTING.md">トラブルシューティング</a>
 </p>
 
 アカウントで利用可能な Pro を含む ChatGPT Web モデルを、Codex のネイティブモデル選択画面から使えます。ChatGPT Web の独立した利用枠を使うため、Work や Codex の利用枠は消費しません。UI、タスク、画像、ストリーミングはそのままです。
@@ -49,13 +49,13 @@ Full ハーネスモードでは、MCP を通じて ChatGPT を現在のタス�
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/miuuyy/codex-chatgpt-web/releases/latest/download/install-launcher.sh | sh
+curl -fsSL https://github.com/pxlarified/Codax/releases/latest/download/install-launcher.sh | sh
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/miuuyy/codex-chatgpt-web/releases/latest/download/install-launcher.ps1 | iex
+irm https://github.com/pxlarified/Codax/releases/latest/download/install-launcher.ps1 | iex
 ```
 
 </details>
@@ -73,7 +73,7 @@ irm https://github.com/miuuyy/codex-chatgpt-web/releases/latest/download/install
 | **Full harness (With Automation)** | 自動 | MCP 経由で利用可能 |
 | **Zero Risk** | 手動で貼り付けて送信 | 専用 MCP コネクタ経由で利用可能 |
 
-Zero Risk は ChatGPT ページを読み取ったり操作したりしません。モデルと `Codex Zero Risk` コネクタを自分で選び、用意されたプロンプトを貼り付けて送信し、ランチャーで **Sent** を確認してください。名前の末尾が **(Web)** の自動モデルでは、対応する Effort を Codex で選択できます。コンテキスト上限を維持するため、Instant と各 Pro バージョンは別の項目になります。既存のタスクに保存された旧モデル項目は、従来の固定モードを維持します。
+Zero Risk は ChatGPT ページを読み取ったり操作したりしません。モデルと `Codex Zero Risk` コネクタを自分で選び、用意されたプロンプトを貼り付けて送信し、ランチャーで **Sent** を確認してください。名前の末尾が **(Web)** の自動モデルでは、対応する Effort を Codex で選択できます。各 Sol バージョンは一つの項目で Low、Medium、High と対応する Extra High を選択できます。Pro バージョンは別の項目です。既存のタスクに保存された旧モデル項目は、従来の固定モードを維持します。
 
 <a id="full-harness"></a>
 
@@ -83,13 +83,9 @@ Full モードは、公式の [OpenAI tunnel-client](https://github.com/openai/t
 ChatGPT のツール呼び出しを現在の Codex タスクへ接続します。トンネルは外向きであり、公開 IP の露出、
 受信ポートの開放、ルーターのポート転送は不要です。
 
-> **Limits**
+> Sol モデルのコンテキストは 272,000 tokens です。メッセージ全体がブラウザーの送信上限を超えると、Codax は自動 compaction を要求します。安全上限は 244,800 tokens です。メッセージは分割せず、Bigger Context の設定もありません。
 >
-> **GPT-5.6 Sol Pro** と **GPT-6 Astra** の現在の ChatGPT メッセージ上限については、
-> [Limits](https://github.com/miuuyy/codex-chatgpt-web/discussions/309) を参照してください。
-> Token コンテキスト上限は、アカウント種別と選択した effort によって異なります。Plus の
-> Medium/High は実測 90,000-token ウィンドウを使用し、実験的な **3× context** を有効にすると
-> 最大 270,000 tokens まで拡張されます。いずれの場合もネイティブ Codex compaction に対応します。
+> 各タスクのブラウザータブは終了時に閉じます。同時タスク数の固定上限はなく、起動時に SNS の操作は必要ありません。
 
 1. ランチャーの必須セットアップを完了します。
 2. ランチャーで **MCP** を開きます。ChatGPT コネクタを使用するものと同じ OpenAI アカウントで
@@ -124,9 +120,9 @@ ChatGPT のツール呼び出しを現在の Codex タスクへ接続します�
 プロトコル変更後は Codex を再起動し、新しいタスクを開始してください。
 
 ```bash
-codex-chatgpt-web subagents status
-codex-chatgpt-web subagents compatibility-v1
-codex-chatgpt-web subagents native
+codax subagents status
+codax subagents compatibility-v1
+codax subagents native
 ```
 
 </details>
@@ -165,8 +161,8 @@ Full モードを有効にする前に、完全な[アーキテクチャ](docs/a
 <a id="development"></a>
 
 ```bash
-git clone https://github.com/miuuyy/codex-chatgpt-web.git && \
-cd codex-chatgpt-web && \
+git clone https://github.com/pxlarified/Codax.git && \
+cd Codax && \
 bun run app
 ```
 
@@ -182,22 +178,15 @@ bun run smoke:subagents
 bun run app:package
 ```
 
-`dev:launcher` は `~/.codex-chatgpt-web-dev` 内の独立したプロファイルとアカウントを使います。`dev:chat` は実際のブラウザーとコンパクション処理を使い、ツールの結果は明示的にシミュレーションします。通常の Codex のルートは変更しません。設定とコマンドは [DEV chat ハーネス](docs/dev-chat.md)を参照してください。
+`dev:launcher` は `~/.codax-dev` 内の独立したプロファイルとアカウントを使います。`dev:chat` は実際のブラウザーとコンパクション処理を使い、ツールの結果は明示的にシミュレーションします。通常の Codex のルートは変更しません。設定とコマンドは [DEV chat ハーネス](docs/dev-chat.md)を参照してください。
 
 </details>
 
-## Star の履歴
-
-<a href="https://www.star-history.com/?repos=miuuyy%2Fcodex-chatgpt-web&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&theme=dark&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-    <img alt="Star 履歴チャート" src="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-  </picture>
-</a>
 
 ---
 
-[トラブルシューティング](TROUBLESHOOTING.md) · [セキュリティ](SECURITY.md) · [コントリビューション](CONTRIBUTING.md) · [MIT ライセンス](LICENSE) · [CI](https://github.com/miuuyy/codex-chatgpt-web/actions/workflows/ci.yml)
+[トラブルシューティング](TROUBLESHOOTING.md) · [セキュリティ](SECURITY.md) · [コントリビューション](CONTRIBUTING.md) · [MIT ライセンス](LICENSE) · [CI](https://github.com/pxlarified/Codax/actions/workflows/ci.yml)
 
 もう一つの自作アプリ：<img src="assets/readme/persona-voice.svg" width="20" height="20" alt=""> [ChatGPT Persona Voice](https://github.com/miuuyy/ChatGPT-Persona-Voice) — ChatGPT と Codex に、ローカルでほぼリアルタイムのカスタム音声を。
+
+Codax builds on miuuyy's original bridge. The context and model registration changes were compared with [miziusArchives/Codax](https://github.com/miziusArchives/Codax). Upstream copyright and license notices are preserved.

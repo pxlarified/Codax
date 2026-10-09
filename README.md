@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-win-x64.exe"><img src="assets/readme/download-windows.svg" width="224" height="64" alt="Windows · x64"></a>&nbsp;
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-mac-arm64.dmg"><img src="assets/readme/download-macos.svg" width="224" height="64" alt="macOS · Apple silicon"></a>&nbsp;
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-linux-x64.AppImage"><img src="assets/readme/download-linux.svg" width="224" height="64" alt="Linux · x64"></a>
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-win-x64.exe"><img src="assets/readme/download-windows.svg" width="224" height="64" alt="Windows · x64"></a>&nbsp;
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-mac-arm64.dmg"><img src="assets/readme/download-macos.svg" width="224" height="64" alt="macOS · Apple silicon"></a>&nbsp;
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-linux-x64.AppImage"><img src="assets/readme/download-linux.svg" width="224" height="64" alt="Linux · x64"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/download/v6.1.7/codex-web-gpt-6.1.7-mac-x64.dmg">macOS Intel</a> · <a href="https://github.com/miuuyy/codex-chatgpt-web/releases/latest">All releases</a>
+  <a href="https://github.com/pxlarified/Codax/releases/download/v6.1.7/codax-6.1.7-mac-x64.dmg">macOS Intel</a> · <a href="https://github.com/pxlarified/Codax/releases/latest">All releases</a>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> · <a href="https://github.com/miuuyy/codex-chatgpt-web/releases">What’s new</a> · <a href="docs/architecture.md">Architecture</a> · <a href="TROUBLESHOOTING.md">Troubleshooting</a>
+  <a href="#get-started">Get started</a> · <a href="https://github.com/pxlarified/Codax/releases">What’s new</a> · <a href="docs/architecture.md">Architecture</a> · <a href="TROUBLESHOOTING.md">Troubleshooting</a>
 </p>
 
 Use the ChatGPT Web models available on your account, including Pro, from Codex’s native model picker—with ChatGPT Web’s separate usage limits, without spending your Work or Codex quota. Keep the same interface, tasks, images, and streaming.
@@ -49,13 +49,13 @@ Quit the launcher before updating. These installers select the platform and arch
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/miuuyy/codex-chatgpt-web/releases/latest/download/install-launcher.sh | sh
+curl -fsSL https://github.com/pxlarified/Codax/releases/latest/download/install-launcher.sh | sh
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/miuuyy/codex-chatgpt-web/releases/latest/download/install-launcher.ps1 | iex
+irm https://github.com/pxlarified/Codax/releases/latest/download/install-launcher.ps1 | iex
 ```
 
 </details>
@@ -73,7 +73,7 @@ Automatic modes offer Luna/Think when the account has no reasoning selector; oth
 | **Full harness (With Automation)** | Automatic | Yes, through MCP |
 | **Zero Risk** | Paste and send manually | Yes, through a separate MCP connector |
 
-Zero Risk does not read or operate the ChatGPT page. Choose the model and `Codex Zero Risk` connector yourself, paste and send the prepared prompt, then confirm **Sent** in the launcher. Automatic models ending in **(Web)** expose their supported Effort choices in Codex. Instant and each Pro version have separate entries to preserve their context budgets; older saved model entries keep their original fixed mode.
+Zero Risk does not read or operate the ChatGPT page. Choose the model and `Codex Zero Risk` connector yourself, paste and send the prepared prompt, then confirm **Sent** in the launcher. Automatic models ending in **(Web)** expose their supported Effort choices in Codex. Each Sol version has one entry with Low, Medium, High and account-supported Extra High efforts. Pro versions have their own entries; older saved model entries keep their original fixed mode.
 
 <a id="full-harness"></a>
 
@@ -86,17 +86,9 @@ not expose a public IP, open an inbound port, or require router forwarding.
 The launcher's **MCP** page guides the complete setup. For the exact clicks, see the
 [video walkthroughs](TROUBLESHOOTING.md).
 
-> **Limits**
+> Sol models advertise a 272,000-token context window. Codax requests automatic compaction when the full message exceeds the browser transport boundary. The safety ceiling is 244,800 tokens. Messages are sent in one piece; there is no separate Bigger Context setting.
 >
-> See [Limits](https://github.com/miuuyy/codex-chatgpt-web/discussions/309) for the current
-> ChatGPT message allowances for **GPT-5.6 Sol Pro** and **GPT-6 Astra**. Context limits depend on
-> the account type and selected effort. Plus Medium/High uses a measured 90,000-token window.
-> GPT-5.6 supports up to 270,000 tokens with experimental **3× context** enabled, with native
-> Codex compaction supported throughout.
->
-> GPT-6 Sol supports **240,000 tokens** with Bigger Context on Pro at Medium, High and Extra High,
-> with compaction at **220,000**. Instant and other account plans use standard context.
-> GPT-5.6 and GPT-6 Pro keep their existing Bigger Context limits.
+> Each task owns a browser tab. There is no fixed active-task limit, and tabs close when tasks finish. Startup requires no social actions.
 
 1. Finish the required setup, open **MCP**, create the Tunnel and regular API key, then press
    **Connect harness**.
@@ -127,9 +119,9 @@ feature settings and enables plaintext Web-to-Web V2 delegation. Restart Codex a
 after changing the protocol:
 
 ```bash
-codex-chatgpt-web subagents status
-codex-chatgpt-web subagents compatibility-v1
-codex-chatgpt-web subagents native
+codax subagents status
+codax subagents compatibility-v1
+codax subagents native
 ```
 
 </details>
@@ -169,8 +161,8 @@ and workspace policies; it does not bypass authentication or access controls.
 <a id="development"></a>
 
 ```bash
-git clone https://github.com/miuuyy/codex-chatgpt-web.git && \
-cd codex-chatgpt-web && \
+git clone https://github.com/pxlarified/Codax.git && \
+cd Codax && \
 bun run app
 ```
 
@@ -186,22 +178,15 @@ bun run smoke:subagents
 bun run app:package
 ```
 
-`dev:launcher` uses a separate profile and account under `~/.codex-chatgpt-web-dev`. `dev:chat` exercises the real browser and compaction paths with explicit simulated tool results, without changing your normal Codex route. See the [DEV chat harness](docs/dev-chat.md) for setup and commands.
+`dev:launcher` uses a separate profile and account under `~/.codax-dev`. `dev:chat` exercises the real browser and compaction paths with explicit simulated tool results, without changing your normal Codex route. See the [DEV chat harness](docs/dev-chat.md) for setup and commands.
 
 </details>
 
-## Star History
-
-<a href="https://www.star-history.com/?repos=miuuyy%2Fcodex-chatgpt-web&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&theme=dark&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=miuuyy/codex-chatgpt-web&type=date&legend=top-left&sealed_token=hBVvg_eOjfMFDrfyeo5FPQkIwcvBEmXc6F7ZoOKnfFE4KPCs67o34w4XwVuM-bHGnKR-SKCAN_TSTWrzuqSBNU-RjNZCLT4f-xNs9qcDhciQtemxHKuuFj0N5YNqZIihdaQfakrh2ANhOrvP0K2LmLXX2zbsYyVaYZknyTnlYeIS_mOGvMcO32ZmPCHK">
-  </picture>
-</a>
 
 ---
 
-[Troubleshooting](TROUBLESHOOTING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE) · [CI](https://github.com/miuuyy/codex-chatgpt-web/actions/workflows/ci.yml)
+[Troubleshooting](TROUBLESHOOTING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE) · [CI](https://github.com/pxlarified/Codax/actions/workflows/ci.yml)
 
 Also by me: <img src="assets/readme/persona-voice.svg" width="20" height="20" alt=""> [ChatGPT Persona Voice](https://github.com/miuuyy/ChatGPT-Persona-Voice) — local, near-real-time custom voices for ChatGPT and Codex.
+
+Codax builds on miuuyy's original bridge. The context and model registration changes were compared with [miziusArchives/Codax](https://github.com/miziusArchives/Codax). Upstream copyright and license notices are preserved.

@@ -223,8 +223,8 @@ export function createTunnelConfig(options: {
   alias?: string;
 }): TunnelConfig {
   if (!/^tunnel_[a-f0-9]{32}$/.test(options.tunnelId)) throw new Error("--tunnel-id must be tunnel_ followed by 32 lowercase hexadecimal characters");
-  const profileName = options.profileName ?? "codex-chatgpt-web";
-  const alias = options.alias ?? "codex-chatgpt-web";
+  const profileName = options.profileName ?? "codax";
+  const alias = options.alias ?? "codax";
   if (!/^[A-Za-z0-9._-]+$/.test(profileName) || !/^[A-Za-z0-9._-]+$/.test(alias)) {
     throw new Error("Tunnel profile and alias may contain only letters, digits, dot, underscore, and dash");
   }
@@ -311,7 +311,7 @@ export function stopTunnel(config: AppConfig): void {
     // v0.0.12 clears its saved PID even when SIGTERM times out. Its subsequent
     // "stopped" inventory is not exit evidence; probe the PID from the stop error.
     if (tunnelStopProcessExited(result.stdout, settings.alias)) {
-      console.warn("[codex-chatgpt-web] tunnel stop timed out; OS confirmed process exit");
+      console.warn("[codax] tunnel stop timed out; OS confirmed process exit");
       return;
     }
     throw new Error(`Failed to stop tunnel runtime: ${result.stderr.trim() || result.stdout.trim()}`);

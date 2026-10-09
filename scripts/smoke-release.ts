@@ -15,7 +15,7 @@ const { validateRuntimeBundle } = require("../launcher/electron/runtime-install.
 
 const sourceBundle = resolve(process.argv[2] ?? "dist/runtime");
 const sourceRoot = resolve(import.meta.dir, "..");
-const root = join(homedir(), `.codex-chatgpt-web-release-smoke-${process.pid}-${Date.now()}`);
+const root = join(homedir(), `.codax-release-smoke-${process.pid}-${Date.now()}`);
 const firstLocation = join(root, "first-location");
 const runtimeRoot = join(root, "relocated-runtime");
 cpSync(sourceBundle, firstLocation, { recursive: true, verbatimSymlinks: true });
@@ -44,7 +44,7 @@ const entrypoint = join(runtimeRoot, manifest.entrypoint);
 const runtimeCommand = [runtimeExecutable, entrypoint];
 const cliBundle = readFileSync(join(runtimeRoot, "app", "cli.js"), "utf8");
 const launcherText = readFileSync(launcher, "utf8");
-for (const forbidden of [sourceRoot, dirname(sourceBundle), "/private/tmp/codex-chatgpt-web-verify", "/tmp/codex-chatgpt-web-verify"]) {
+for (const forbidden of [sourceRoot, dirname(sourceBundle), "/private/tmp/codax-verify", "/tmp/codax-verify"]) {
   if (cliBundle.includes(forbidden) || launcherText.includes(forbidden)) {
     throw new Error(`Runtime artifact embeds an ephemeral build path: ${forbidden}`);
   }
@@ -99,7 +99,7 @@ try {
   }
   if (!health?.ok) throw new Error("relocated daemon did not become healthy");
   const payload = await health.json() as Record<string, unknown>;
-  if (payload.service !== "codex-chatgpt-web" || payload.mode !== "browser-only") {
+  if (payload.service !== "codax" || payload.mode !== "browser-only") {
     throw new Error(`unexpected health payload: ${JSON.stringify(payload)}`);
   }
 

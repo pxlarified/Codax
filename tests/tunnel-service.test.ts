@@ -52,7 +52,7 @@ afterEach(() => {
 
 describe("tunnel launchd ownership", () => {
   test("runs the pinned client directly and asks launchd to restore it", () => {
-    const root = join(tmpdir(), `codex-chatgpt-web-tunnel-service-${process.pid}-${Date.now()}`);
+    const root = join(tmpdir(), `codax-tunnel-service-${process.pid}-${Date.now()}`);
     roots.push(root);
     process.env.CODEX_CHATGPT_WEB_HOME = root;
     const binary = join(root, "bin", "tunnel-client");
@@ -80,10 +80,10 @@ describe("tunnel launchd ownership", () => {
   });
 
   test("restarts the long-lived MCP worker when the installed release changes", () => {
-    const root = join(tmpdir(), `codex-chatgpt-web-tunnel-runtime-${process.pid}-${Date.now()}`);
+    const root = join(tmpdir(), `codax-tunnel-runtime-${process.pid}-${Date.now()}`);
     roots.push(root);
     process.env.CODEX_CHATGPT_WEB_HOME = root;
-    const runtime = join(root, "bin", "codex-chatgpt-web");
+    const runtime = join(root, "bin", "codax");
     mkdirSync(join(root, "bin"), { recursive: true });
     writeFileSync(runtime, "runtime");
     const before = defaultConfig("browser-only");
@@ -99,7 +99,7 @@ describe("tunnel launchd ownership", () => {
   });
 
   test("reuses complete full-mode tunnel credentials during setup updates", () => {
-    const root = join(tmpdir(), `codex-chatgpt-web-existing-tunnel-${process.pid}-${Date.now()}`);
+    const root = join(tmpdir(), `codax-existing-tunnel-${process.pid}-${Date.now()}`);
     roots.push(root);
     process.env.CODEX_CHATGPT_WEB_HOME = root;
     const key = join(root, "secrets", "runtime.key");
@@ -119,7 +119,7 @@ describe("tunnel launchd ownership", () => {
   });
 
   test("passes the Windows MCP runtime directly to tunnel-client without cmd.exe", () => {
-    const root = join(tmpdir(), `codex-chatgpt-web-windows-mcp-${process.pid}-${Date.now()}`);
+    const root = join(tmpdir(), `codax-windows-mcp-${process.pid}-${Date.now()}`);
     roots.push(root);
     process.env.CODEX_CHATGPT_WEB_HOME = root;
     const runtime = join(root, "Program Files", "runtime", "bun.exe");
@@ -127,13 +127,13 @@ describe("tunnel launchd ownership", () => {
     writeFileSync(runtime, "runtime");
     const config = defaultConfig("browser-only");
     config.runtimeCommand = [runtime, join(root, "Program Files", "app", "cli.js")];
-    config.brokerSocketPath = "\\\\.\\pipe\\codex-chatgpt-web-test";
+    config.brokerSocketPath = "\\\\.\\pipe\\codax-test";
 
     const command = mcpCommand(config, "win32");
     expect(command).toBe(
       `"${runtime.replaceAll("\\", "\\\\")}" `
       + `"${join(root, "Program Files", "app", "cli.js").replaceAll("\\", "\\\\")}" `
-      + '"mcp" "--contract" "native" "--broker-socket" "\\\\\\\\.\\\\pipe\\\\codex-chatgpt-web-test"',
+      + '"mcp" "--contract" "native" "--broker-socket" "\\\\\\\\.\\\\pipe\\\\codax-test"',
     );
     expect(command).not.toContain("cmd.exe");
     expect(existsSync(join(root, "bin", "mcp-launcher.cmd"))).toBe(false);
@@ -144,7 +144,7 @@ describe("tunnel launchd ownership", () => {
       "--contract",
       "native",
       "--broker-socket",
-      "\\\\.\\pipe\\codex-chatgpt-web-test",
+      "\\\\.\\pipe\\codax-test",
     ]);
 
     config.browserInteractionMode = "manual";

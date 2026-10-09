@@ -462,13 +462,13 @@ export const CHATGPT_WEB_LEGACY_MODEL_ROUTES: readonly ChatGptWebAutomaticModelR
   },
 ];
 
-/** Group only efforts with identical context and compaction budgets. */
+/** One selectable model per family; old Instant identities remain hidden for saved tasks. */
 export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] = [
   {
     slug: "chatgpt-web/gpt-6-sol-instant",
     legacy: true,
     displayName: "GPT-6 Sol Instant (Web)",
-    description: "GPT-6 Sol Instant through ChatGPT. Uses standard context even when Bigger Context is enabled.",
+    description: "GPT-6 Sol with the fixed Low effort for existing tasks.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,
     modelFamily: "6",
@@ -493,7 +493,7 @@ export const CHATGPT_WEB_MODEL_ROUTES: readonly ChatGptWebAutomaticModelRoute[] 
     slug: "chatgpt-web/gpt-5.6-sol-instant",
     legacy: true,
     displayName: "GPT-5.6 Sol Instant (Web)",
-    description: "GPT-5.6 Sol Instant through ChatGPT, with its own context and compaction budget.",
+    description: "GPT-5.6 Sol with the fixed Low effort for existing tasks.",
     interactionMode: "automatic",
     backendModel: CHATGPT_WEB_BACKEND_MODEL,
     modelFamily: "5.6",

@@ -11,7 +11,7 @@ const START = Date.UTC(2026, 8, 19);
 const config = (accountKey = A, plan = "pro_200") => ({ accountKey, plan });
 const receipt = (id, accountKey = A, at = START) => ({ id, accountKey, at, model: "gpt-6-pro" });
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codex-web-gpt-limits-controller-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "codax-limits-controller-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const file = path.join(root, "limits.json");
   let mode = "automatic";

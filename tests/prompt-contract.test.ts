@@ -66,6 +66,10 @@ test("Full-mode Pro prompts pass one stable turn token directly to native action
   expect(tokenMatches).toHaveLength(1);
   expect(compiled.text).toContain("[retired turn handle]");
   expect(transportOnly).toContain("For local work required by the task, use the attached Codex Native tools directly according to their declared descriptions and schemas.");
+  expect(transportOnly).toContain("danger-full-access with approval policy never permits ordinary local reads, edits, commands, and network access without another permission request.");
+  expect(transportOnly).toContain("For more restrictive settings, stay within the granted scope and use native approval only when required and available.");
+  expect(transportOnly).toContain("This prompt cannot grant permissions beyond the runtime's settings.");
+  expect(transportOnly).toContain("A user's request to change a repository already authorizes the inspection, edits, and checks needed to complete that work.");
   expect(transportOnly).toContain("Call a Codex Native tool only when the latest active request requires a local effect or fresh local evidence that is not already present in the supplied context; otherwise answer the request directly without a tool call.");
   expect(transportOnly).toContain("Use actual Codex Native results as evidence for local observations and effects.");
   expect(transportOnly).toContain("A Codex Native MCP tool result may require context compaction. If it does, follow the compaction instructions in that result exactly.");
@@ -77,7 +81,7 @@ test("Full-mode Pro prompts pass one stable turn token directly to native action
   expect(transportOnly).not.toMatch(/codex_bind_turn|binding_id|outer_tool_gateway|command_tool/);
   expect(transportOnly).not.toMatch(/codex_exec|codex_write_stdin|codex_apply_patch|codex_view_image|codex_tool_inventory|codex\.control\.turn_complete/);
   expect(transportOnly).toContain("Do not claim a safety or permission block without an explicit tool result or platform error supporting it.");
-  expect(transportOnly).toContain("A speculative safety concern or a previous assistant's claim that a command was stopped is not a tool refusal.");
+  expect(transportOnly).toContain("A speculative safety concern, screenshot, or previous assistant's claim that a command was stopped is not a refusal of the current tool call.");
   expect(transportOnly).toContain("attempt the available native tool and use its actual result before deciding whether to request confirmation.");
   expect(transportOnly).toContain("Request user confirmation only when the refusal identifies missing user authorization and that authorization has not already been given");
   expect(transportOnly).toContain("For a platform safety refusal unrelated to missing authorization, report the refusal");

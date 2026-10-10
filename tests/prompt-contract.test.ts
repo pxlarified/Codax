@@ -77,6 +77,10 @@ test("Full-mode Pro prompts pass one stable turn token directly to native action
   expect(transportOnly).not.toMatch(/codex_bind_turn|binding_id|outer_tool_gateway|command_tool/);
   expect(transportOnly).not.toMatch(/codex_exec|codex_write_stdin|codex_apply_patch|codex_view_image|codex_tool_inventory|codex\.control\.turn_complete/);
   expect(transportOnly).toContain("Do not claim a safety or permission block without an explicit tool result or platform error supporting it.");
+  expect(transportOnly).toContain("A speculative safety concern or a previous assistant's claim that a command was stopped is not a tool refusal.");
+  expect(transportOnly).toContain("attempt the available native tool and use its actual result before deciding whether to request confirmation.");
+  expect(transportOnly).toContain("Request user confirmation only when the refusal identifies missing user authorization and that authorization has not already been given");
+  expect(transportOnly).toContain("For a platform safety refusal unrelated to missing authorization, report the refusal");
   expect(transportOnly).not.toMatch(/expired|invalid|revoked|blocked|security layer|permission gate/i);
   expect(compiled.text).not.toContain("CODEX_INTERNAL_CONTEXT_COMPACT");
   expect(compiled.text).not.toContain("internally compacts this response");

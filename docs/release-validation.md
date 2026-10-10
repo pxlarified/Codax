@@ -1,6 +1,6 @@
 # Release validation
 
-CI proves that the runtime builds, the launcher starts, and native packages pass their smoke
+Tagged release builds verify that the runtime builds, the launcher starts, and native packages pass their smoke
 contract on macOS, Windows, and Linux. It does not prove an authenticated ChatGPT session, a live
 MCP connector, or a complete Codex turn. A release candidate is not ready until those account-bound
 flows are exercised manually on the platforms below.
@@ -82,6 +82,6 @@ interactive account flow.
 
 ## Linux gate
 
-CI packaging smoke is required. Before claiming interactive Linux support for a release, repeat
+Release packaging smoke is required. Before claiming interactive Linux support for a release, repeat
 items 2 through 7 under a supported desktop session and record the display server and packaging
 format used.
